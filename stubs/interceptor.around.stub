@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Laravents\Attributes\Around;
+use Laravents\Invocation\MethodInvocation;
+use {{ namespacedPointcut }};
+
+final class {{ class }}
+{
+    #[Around(pointcut: {{ pointcut }}::class)]
+    public function handle(MethodInvocation $invocation{{ rule }}): mixed
+    {
+        return $invocation->proceed();
+    }
+}

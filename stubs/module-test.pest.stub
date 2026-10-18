@@ -1,0 +1,9 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Support\Facades\Artisan;
+
+test('the {{ module }} module lists its handlers', function (): void {
+    expect(Artisan::call('laravents:list', ['--module' => '{{ module }}']))->toBe(0);
+});

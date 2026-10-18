@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>
+document.documentElement.classList.add('js');
+setTimeout(function () { document.body && document.body.classList.add('loaded'); }, 1500);
+/* The stored locale before <body> paints; the same key as assets/locale.js. */
+try {
+  var storedLocale = localStorage.getItem('laravents-locale');
+  if (storedLocale && storedLocale !== 'en') document.documentElement.lang = storedLocale;
+} catch (e) {}
+</script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<title>Changelog · Laravents</title>
+<meta name="author" content="Luciano Federico Pereira" />
+<meta name="description" content="Laravents release notes — every version, as it ships." />
+<link rel="canonical" href="https://cruciblephp.github.io/laravents/changelog.html" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Changelog · Laravents" />
+<meta property="og:description" content="Laravents release notes — every version, as it ships." />
+<meta name="twitter:card" content="summary" />
+<meta name="theme-color" content="#faf8f1" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="assets/favicon.ico" sizes="32x32" />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<link rel="manifest" href="assets/site.webmanifest" />
+<link rel="stylesheet" href="assets/site.css" />
+<link rel="stylesheet" href="assets/palettes.css" />
+<link rel="stylesheet" href="assets/changelog.css" />
+<link rel="stylesheet" href="assets/locale.css" />
+<link rel="preconnect" crossorigin="anonymous" href="https://translate.google.com">
+<link rel="preconnect" crossorigin="anonymous" href="https://translate.googleapis.com">
+<link rel="dns-prefetch" href="https://translate.google.com">
+<link rel="dns-prefetch" href="https://translate.googleapis.com">
+</head>
+<body data-github-repo="cruciblephp/laravents">
+
+<svg style="position:absolute; width:0; height:0; overflow:hidden" aria-hidden="true">
+  <!-- The mark: assets/laravents.svg's own paths, the viewBox cropped to the artwork. -->
+  <symbol id="icon-laravents" viewBox="37.8 112 316.9 280.32">
+    <path fill="#e80c08" d="M 200.00,341.63 L 315.00,275.20 L 309.00,264.80 L 200.00,327.77 L 94.00,266.54 L 94.00,150.00 L 82.00,150.00 L 82.00,273.46 Z M 200.00,392.32 L 354.70,302.99 L 339.70,277.01 L 200.00,357.68 L 67.80,281.34 L 67.80,112.00 L 37.80,112.00 L 37.80,298.66 Z"/>
+    <path fill="#e80c08" d="M 200.00,142.31 L 178.89,154.50 L 200.00,166.69 L 221.11,154.50 Z M 176.89,182.35 L 198.00,194.54 L 198.00,170.15 L 176.89,157.96 Z M 202.00,194.54 L 223.11,182.35 L 223.11,157.96 L 202.00,170.15 Z M 151.50,226.31 L 130.39,238.50 L 151.50,250.69 L 172.61,238.50 Z M 248.50,226.31 L 227.39,238.50 L 248.50,250.69 L 269.61,238.50 Z M 128.39,266.35 L 149.50,278.54 L 149.50,254.15 L 128.39,241.96 Z M 153.50,278.54 L 174.61,266.35 L 174.61,241.96 L 153.50,254.15 Z M 246.50,278.54 L 246.50,254.15 L 225.39,241.96 L 225.39,266.35 Z M 271.61,266.35 L 271.61,241.96 L 250.50,254.15 L 250.50,278.54 Z"/>
+    <path fill="#f17510" d="M 186.55,215.50 L 200.00,223.27 L 213.45,215.50 L 200.00,207.73 Z M 198.50,241.40 L 198.50,225.87 L 185.05,218.10 L 185.05,233.63 Z M 214.95,233.63 L 214.95,218.10 L 201.50,225.87 L 201.50,241.40 Z"/>
+  </symbol>
+  <symbol id="icon-external" viewBox="0 0 24 24">
+    <path d="M7 17 17 7" />
+    <path d="M8 7h9v9" />
+  </symbol>
+  <!-- Magnifying glass for the search/jump-to trigger — same hand-drawn
+       stroke language (round caps, two simple paths) as icon-external. -->
+  <symbol id="icon-search" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="7" />
+    <path d="M20 20 16 16" />
+  </symbol>
+  <!-- Chevron for the back-to-top button — same construction as the
+       carousel's left/right arrows (.carousel-btn svg), just pointing up. -->
+  <symbol id="icon-chevron-up" viewBox="0 0 24 24">
+    <path d="M5 15 12 8 19 15" />
+  </symbol>
+  <symbol id="flag-bg" viewBox="0 0 640 480">
+<path fill="#fff" d="M0 0h640v160H0z"/>
+  <path fill="#00966e" d="M0 160h640v160H0z"/>
+  <path fill="#d62612" d="M0 320h640v160H0z"/>
+  </symbol>
+  <symbol id="flag-cn" viewBox="0 0 640 480">
+<defs>
+    <path id="cn-a" fill="#ff0" d="M-.6.8 0-1 .6.8-1-.3h2z"/>
+  </defs>
+  <path fill="#ee1c25" d="M0 0h640v480H0z"/>
+  <use href="#cn-a" width="30" height="20" transform="matrix(71.9991 0 0 72 120 120)"/>
+  <use href="#cn-a" width="30" height="20" transform="rotate(239.07 133.748 -44.074)scale(23.99992 23.99978)"/>
+  <use href="#cn-a" width="30" height="20" transform="rotate(-98.11 185.558 -77.035)scale(24 23.9997)"/>
+  <use href="#cn-a" width="30" height="20" transform="matrix(6.5991 -23.0749 23.0746 6.59919 288 168)"/>
+  <use href="#cn-a" width="30" height="20" transform="matrix(14.9991 -18.73557 18.73533 14.99929 240 216)"/>
+  </symbol>
+  <symbol id="flag-cz" viewBox="0 0 640 480">
+<path fill="#fff" d="M0 0h640v240H0z"/>
+  <path fill="#d7141a" d="M0 240h640v240H0z"/>
+  <path fill="#11457e" d="M360 240 0 0v480z"/>
+  </symbol>
+  <symbol id="flag-de" viewBox="0 0 640 480">
+<path fill="#fc0" d="M0 320h640v160H0z"/>
+  <path fill="#000001" d="M0 0h640v160H0z"/>
+  <path fill="red" d="M0 160h640v160H0z"/>
+  </symbol>
+  <symbol id="flag-dk" viewBox="0 0 640 480">
+<path fill="#c8102e" d="M0 0h640.1v480H0z"/>
+  <path fill="#fff" d="M205.7 0h68.6v480h-68.6z"/>
+  <path fill="#fff" d="M0 205.7h640.1v68.6H0z"/>
+  </symbol>
+  <symbol id="flag-ee" viewBox="0 0 640 480">
+<path fill="#1791ff" d="M0 0h640v160H0z"/>
+  <path fill="#000001" d="M0 160h640v160H0z"/>
+  <path fill="#fff" d="M0 320h640v160H0z"/>
+  </symbol>
+  <symbol id="flag-es" viewBox="0 0 640 480">
+<path fill="#aa151b" d="M0 0h640v480H0z"/>
+  <path fill="#f1bf00" d="M0 120h640v240H0z"/>
+  </symbol>
+  <symbol id="flag-fi" viewBox="0 0 640 480">
+<path fill="#fff" d="M0 0h640v480H0z"/>
+  <path fill="#002f6c" d="M0 174.5h640v131H0z"/>
+  <path fill="#002f6c" d="M175.5 0h130.9v480h-131z"/>
+  </symbol>
+  <symbol id="flag-fr" viewBox="0 0 640 480">
+<path fill="#fff" d="M0 0h640v480H0z"/>
+  <path fill="#000091" d="M0 0h213.3v480H0z"/>
+  <path fill="#e1000f" d="M426.7 0H640v480H426.7z"/>
+  </symbol>
+  <symbol id="flag-gr" viewBox="0 0 640 480">
+<path fill="#0d5eaf" fill-rule="evenodd" d="M0 0h640v53.3H0z"/>
+  <path fill="#fff" fill-rule="evenodd" d="M0 53.3h640v53.4H0z"/>
+  <path fill="#0d5eaf" fill-rule="evenodd" d="M0 106.7h640V160H0z"/>
+  <path fill="#fff" fill-rule="evenodd" d="M0 160h640v53.3H0z"/>
+  <path fill="#0d5eaf" d="M0 0h266.7v266.7H0z"/>
+  <path fill="#0d5eaf" fill-rule="evenodd" d="M0 213.3h640v53.4H0z"/>
+  <path fill="#fff" fill-rule="evenodd" d="M0 266.7h640V320H0z"/>
+  <path fill="#0d5eaf" fill-rule="evenodd" d="M0 320h640v53.3H0z"/>
+  <path fill="#fff" fill-rule="evenodd" d="M0 373.3h640v53.4H0z"/>
+  <g fill="#fff" fill-rule="evenodd" stroke-width="1.3">
+    <path d="M106.7 0H160v266.7h-53.3z"/>
+    <path d="M0 106.7h266.7V160H0z"/>
+  </g>
+  <path fill="#0d5eaf" d="M0 426.7h640V480H0z"/>
+  </symbol>
+  <symbol id="flag-hr" viewBox="0 0 640 480">
+<path fill="#171796" d="M0 0h640v480H0z"/>
+  <path fill="#fff" d="M0 0h640v320H0z"/>
+  <path fill="red" d="M0 0h640v160H0z"/>
+  </symbol>
+  <symbol id="flag-hu" viewBox="0 0 640 480">
+<g fill-rule="evenodd">
+    <path fill="#fff" d="M640 480H0V0h640z"/>
+    <path fill="#388d00" d="M640 480H0V320h640z"/>
+    <path fill="#d43516" d="M640 160.1H0V.1h640z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-ie" viewBox="0 0 640 480">
+<g fill-rule="evenodd" stroke-width="1pt">
+    <path fill="#fff" d="M0 0h640v480H0z"/>
+    <path fill="#009a49" d="M0 0h213.3v480H0z"/>
+    <path fill="#ff7900" d="M426.7 0H640v480H426.7z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-it" viewBox="0 0 640 480">
+<g fill-rule="evenodd" stroke-width="1pt">
+    <path fill="#fff" d="M0 0h640v480H0z"/>
+    <path fill="#009246" d="M0 0h213.3v480H0z"/>
+    <path fill="#ce2b37" d="M426.7 0H640v480H426.7z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-lt" viewBox="0 0 640 480">
+<g fill-rule="evenodd" stroke-width="1pt" transform="scale(.64143 .96773)">
+    <rect width="1063" height="708.7" fill="#006a44" rx="0" ry="0" transform="scale(.93865 .69686)"/>
+    <rect width="1063" height="236.2" y="475.6" fill="#c1272d" rx="0" ry="0" transform="scale(.93865 .69686)"/>
+    <path fill="#fdb913" d="M0 0h997.8v164.6H0z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-lv" viewBox="0 0 640 480">
+<g fill-rule="evenodd">
+    <path fill="#fff" d="M0 0h640v480H0z"/>
+    <path fill="#981e32" d="M0 0h640v192H0zm0 288h640v192H0z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-mt" viewBox="0 0 640 480">
+<path fill="#fff" d="M0 0h320v480H0z"/>
+  <path fill="#cf142b" d="M320 0h320v480H320z"/>
+  </symbol>
+  <symbol id="flag-nl" viewBox="0 0 640 480">
+<path fill="#ae1c28" d="M0 0h640v160H0z"/>
+  <path fill="#fff" d="M0 160h640v160H0z"/>
+  <path fill="#21468b" d="M0 320h640v160H0z"/>
+  </symbol>
+  <symbol id="flag-pl" viewBox="0 0 640 480">
+<g fill-rule="evenodd">
+    <path fill="#fff" d="M640 480H0V0h640z"/>
+    <path fill="#dc143c" d="M640 480H0V240h640z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-pt" viewBox="0 0 640 480">
+<path fill="red" d="M256 0h384v480H256z"/>
+  <path fill="#060" d="M0 0h256v480H0z"/>
+  </symbol>
+  <symbol id="flag-ro" viewBox="0 0 640 480">
+<g fill-rule="evenodd" stroke-width="1pt">
+    <path fill="#00319c" d="M0 0h213.3v480H0z"/>
+    <path fill="#ffde00" d="M213.3 0h213.4v480H213.3z"/>
+    <path fill="#de2110" d="M426.7 0H640v480H426.7z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-se" viewBox="0 0 640 480">
+<path fill="#005293" d="M0 0h640v480H0z"/>
+  <path fill="#fecb00" d="M176 0v192H0v96h176v192h96V288h368v-96H272V0z"/>
+  </symbol>
+  <symbol id="flag-si" viewBox="0 0 640 480">
+<defs>
+    <clipPath id="si-a">
+      <path fill-opacity=".7" d="M-15 0h682.6v512H-15.1z"/>
+    </clipPath>
+  </defs>
+  <g fill-rule="evenodd" stroke-width="1pt" clip-path="url(#si-a)" transform="translate(14.1)scale(.9375)">
+    <path fill="#fff" d="M-62 0H962v512H-62z"/>
+    <path fill="#d50000" d="M-62 341.3H962V512H-62z"/>
+    <path fill="#0000bf" d="M-62 170.7H962v170.6H-62z"/>
+    <path fill="#d50000" d="M228.4 93c-4 61.6-6.4 95.4-15.7 111-10.2 16.8-20 29.1-59.7 44-39.6-14.9-49.4-27.2-59.6-44-9.4-15.6-11.7-49.4-15.7-111l5.8-2c11.8-3.6 20.6-6.5 27.1-7.8 9.3-2 17.3-4.2 42.3-4.7 25 .4 33 2.8 42.3 4.8q9.7 2.1 27.3 7.7z"/>
+    <path fill="#0000bf" d="M222.6 91c-3.8 61.5-7 89.7-12 103.2-9.6 23.2-24.8 35.9-57.6 48-32.8-12.1-48-24.8-57.7-48-5-13.6-8-41.7-11.8-103.3q17.4-5.6 27.1-7.7c9.3-2 17.3-4.3 42.3-4.7 25 .4 33 2.7 42.3 4.7a284 284 0 0 1 27.4 7.7z"/>
+    <path fill="#ffdf00" d="m153 109.8 1.5 3.7 7 1-4.5 2.7 4.3 2.9-6.3 1-2 3.4-2-3.5-6-.8 4-3-4.2-2.7 6.7-1z"/>
+    <path fill="#fff" d="m208.3 179.6-3.9-3-2.7-4.6-5.4-4.7-2.9-4.7-5.4-4.9-2.6-4.7-3-2.3-1.8-1.9-5 4.3-2.6 4.7-3.3 3-3.7-2.9-2.7-4.8-10.3-18.3-10.3 18.3-2.7 4.8-3.7 2.9-3.3-3-2.7-4.7-4.9-4.3-1.9 1.8-2.9 2.4-2.6 4.7-5.4 4.9-2.9 4.7-5.4 4.7-2.7 4.6-3.9 3a66 66 0 0 0 18.6 36.3 107 107 0 0 0 36.6 20.5 104 104 0 0 0 36.8-20.5c5.8-6 16.6-19.3 18.6-36.3"/>
+    <path fill="#ffdf00" d="m169.4 83.9 1.6 3.7 7 1-4.6 2.7 4.4 2.9-6.3 1-2 3.4-2-3.5-6-.8 4-3-4.2-2.7 6.6-1zm-33 0 1.6 3.7 7 .9-4.5 2.7 4.3 2.9-6.3 1-2 3.4-2-3.4-6-.9 4-3-4.2-2.7 6.7-1z"/>
+    <path fill="#0000bf" d="M199.7 203h-7.4l-7-.5-8.3-4h-9.4l-8.1 4-6.5.6-6.4-.6-8.1-4H129l-8.4 4-6.9.6-7.6-.1-3.6-6.2.1-.2 11.2 1.9 6.9-.5 8.3-4.1h9.4l8.2 4 6.4.6 6.5-.6 8.1-4h9.4l8.4 4 6.9.6 10.8-2 .2.4zm-86.4 9.5 7.4-.5 8.3-4h9.4l8.2 4 6.4.5 6.4-.5 8.2-4h9.4l8.3 4 7.5.5 4.8-6h-.1l-5.2 1.4-6.9-.5-8.3-4h-9.4l-8.2 4-6.4.6-6.5-.6-8.1-4H129l-8.4 4-6.9.6-5-1.3v.2l4.5 5.6z"/>
+  </g>
+  </symbol>
+  <symbol id="flag-sk" viewBox="0 0 640 480">
+<path fill="#ee1c25" d="M0 0h640v480H0z"/>
+  <path fill="#0b4ea2" d="M0 0h640v320H0z"/>
+  <path fill="#fff" d="M0 0h640v160H0z"/>
+  <path fill="#fff" d="M233 370.8c-43-20.7-104.6-61.9-104.6-143.2 0-81.4 4-118.4 4-118.4h201.3s3.9 37 3.9 118.4S276 350 233 370.8"/>
+  <path fill="#ee1c25" d="M233 360c-39.5-19-96-56.8-96-131.4s3.6-108.6 3.6-108.6h184.8s3.5 34 3.5 108.6C329 303.3 272.5 341 233 360"/>
+  <path fill="#fff" d="M241.4 209c10.7.2 31.6.6 50.1-5.6 0 0-.4 6.7-.4 14.4s.5 14.4.5 14.4c-17-5.7-38.1-5.8-50.2-5.7v41.2h-16.8v-41.2c-12-.1-33.1 0-50.1 5.7 0 0 .5-6.7.5-14.4s-.5-14.4-.5-14.4c18.5 6.2 39.4 5.8 50 5.6v-25.9c-9.7 0-23.7.4-39.6 5.7 0 0 .5-6.6.5-14.4 0-7.7-.5-14.4-.5-14.4 15.9 5.3 29.9 5.8 39.6 5.7-.5-16.4-5.3-37-5.3-37s9.9.7 13.8.7 13.8-.7 13.8-.7-4.8 20.6-5.3 37c9.7.1 23.7-.4 39.6-5.7 0 0-.5 6.7-.5 14.4s.5 14.4.5 14.4a119 119 0 0 0-39.7-5.7v26z"/>
+  <path fill="#0b4ea2" d="M233 263.3c-19.9 0-30.5 27.5-30.5 27.5s-6-13-22.2-13c-11 0-19 9.7-24.2 18.8 20 31.7 51.9 51.3 76.9 63.4 25-12 57-31.7 76.9-63.4-5.2-9-13.2-18.8-24.2-18.8-16.2 0-22.2 13-22.2 13S253 263.3 233 263.3"/>
+  </symbol>
+  <symbol id="flag-us" viewBox="0 0 640 480">
+<path fill="#bd3d44" d="M0 0h640v480H0"/>
+  <path stroke="#fff" stroke-width="37" d="M0 55.3h640M0 129h640M0 203h640M0 277h640M0 351h640M0 425h640"/>
+  <path fill="#192f5d" d="M0 0h364.8v258.5H0"/>
+  <marker id="us-a" markerHeight="30" markerWidth="30">
+    <path fill="#fff" d="m14 0 9 27L0 10h28L5 27z"/>
+  </marker>
+  <path fill="none" marker-mid="url(#us-a)" d="m0 0 16 11h61 61 61 61 60L47 37h61 61 60 61L16 63h61 61 61 61 60L47 89h61 61 60 61L16 115h61 61 61 61 60L47 141h61 61 60 61L16 166h61 61 61 61 60L47 192h61 61 60 61L16 218h61 61 61 61 60z"/>
+  </symbol>
+  <symbol id="icon-globe" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M2 12h20"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </symbol>
+</svg>
+
+<div class="print-only" id="print-meta" aria-hidden="true">
+  <strong id="print-meta-title"></strong>
+  <span id="print-meta-url"></span>
+  <span id="print-meta-date"></span>
+</div>
+
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="shell">
+
+<nav class="nav" aria-label="Primary">
+  <div class="wrap">
+    <a class="brand notranslate" href="index.html#top"><span class="logo"><svg class="logo-mark" aria-hidden="true"><use href="#icon-laravents"/></svg></span> Laravents</a>
+    <div class="links" id="nav-links">
+      <a class="i18n link" href="index.html#compare"><span data-i18n-default>Why</span><span data-locale="es" class="notranslate">Por qué</span><span data-locale="it" class="notranslate">Perché</span></a>
+      <a class="i18n link" href="index.html#demo"><span data-i18n-default>Live demo</span><span data-locale="es" class="notranslate">Demo en vivo</span><span data-locale="it" class="notranslate">Demo dal vivo</span></a>
+      <a class="i18n link" href="index.html#example"><span data-i18n-default>Example</span><span data-locale="es" class="notranslate">Ejemplo</span><span data-locale="it" class="notranslate">Esempio</span></a>
+      <a class="i18n link" href="index.html#use-cases"><span data-i18n-default>Use cases</span><span data-locale="es" class="notranslate">Casos de uso</span><span data-locale="it" class="notranslate">Casi d'uso</span></a>
+      <a class="i18n link" href="index.html#how"><span data-i18n-default>How it works</span><span data-locale="es" class="notranslate">Cómo funciona</span><span data-locale="it" class="notranslate">Come funziona</span></a>
+      <a class="i18n link" href="index.html#quick-start"><span data-i18n-default>Quick start</span><span data-locale="es" class="notranslate">Inicio rápido</span><span data-locale="it" class="notranslate">Avvio rapido</span></a>
+      <a class="i18n link" href="index.html#options"><span data-i18n-default>Console</span><span data-locale="es" class="notranslate">Consola</span><span data-locale="it" class="notranslate">Console</span></a>
+      <a class="i18n link" href="index.html#features"><span data-i18n-default>Features</span><span data-locale="es" class="notranslate">Funciones</span><span data-locale="it" class="notranslate">Funzionalità</span></a>
+      <a class="i18n link" href="index.html#faq"><span data-i18n-default>FAQ</span><span data-locale="es" class="notranslate">Preguntas frecuentes</span><span data-locale="it" class="notranslate">Domande frequenti</span></a>
+      <div class="links-external">
+        <a class="i18n link link--external" href="docs.html"><span data-i18n-default>Docs</span><span data-locale="es" class="notranslate">Documentación</span><span data-locale="it" class="notranslate">Documentazione</span><svg class="link-external-icon" aria-hidden="true"><use href="#icon-external"/></svg></a>
+        <a class="link link--external notranslate" href="https://github.com/cruciblephp/laravents" target="_blank" rel="noopener">GitHub<svg class="link-external-icon" aria-hidden="true"><use href="#icon-external"/></svg></a>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button type="button" class="search-trigger" id="search-trigger" aria-haspopup="dialog" aria-label="Search or jump to&hellip;">
+      <svg class="search-trigger-icon" aria-hidden="true"><use href="#icon-search"/></svg>
+      <span class="search-trigger-label">Search</span>
+      <kbd class="search-kbd">S</kbd>
+    </button>
+    <div class="locale-switcher notranslate" id="locale-switcher">
+      <button type="button" class="locale-trigger" id="locale-trigger"
+              aria-haspopup="true" aria-expanded="false" aria-controls="locale-menu"
+              aria-label="Choose language">
+        <svg class="locale-trigger-icon" aria-hidden="true"><use href="#icon-globe"/></svg>
+      </button>
+      <ul class="locale-menu" id="locale-menu" role="menu" aria-hidden="true" aria-label="Choose language"></ul>
+      <span class="locale-announce" id="locale-announce" role="status" aria-live="polite"></span>
+    </div>
+    <div id="translate" class="notranslate" hidden></div>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle menu">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+  </div>
+</nav>
+
+<dialog class="search-modal" id="search-modal" aria-label="Search or jump to">
+  <div class="search-input-wrap">
+    <svg aria-hidden="true"><use href="#icon-search"/></svg>
+    <input type="search" id="search-input" placeholder="Search or jump to&hellip;" autocomplete="off" aria-controls="search-results" aria-expanded="false" role="combobox" />
+  </div>
+  <ul class="search-results" id="search-results" role="listbox"></ul>
+</dialog>
+
+<main id="main-content">
+
+<div class="changelog-layout">
+  <article class="article">
+    <p class="i18n changelog-eyebrow"><span data-i18n-default>Release Notes</span><span data-locale="es" class="notranslate">Notas de la versión</span><span data-locale="it" class="notranslate">Note di rilascio</span></p>
+    <h1 class="title" id="pageTitle">Changelog</h1>
+    <p class="dek" id="dek"></p>
+    <p class="changelog-byline">
+      <span class="i18n"><span data-i18n-default>Generated from CHANGELOG.md</span><span data-locale="es" class="notranslate">Generado desde CHANGELOG.md</span><span data-locale="it" class="notranslate">Generato da CHANGELOG.md</span></span>
+      <span class="dot"></span>
+      <span id="totalRead">&ndash; min read</span>
+    </p>
+
+    <div id="sections">
+      <p class="changelog-loading">Loading changelog&hellip;</p>
+    </div>
+  </article>
+
+  <aside>
+    <p class="i18n changelog-toc-label"><span data-i18n-default>Versions</span><span data-locale="es" class="notranslate">Versiones</span><span data-locale="it" class="notranslate">Versioni</span></p>
+    <div class="changelog-toc-meta">
+      <a class="changelog-current-version" id="currentVersion" target="_blank" rel="noopener"></a>
+    </div>
+    <ul class="changelog-toc-list" id="tocList"></ul>
+  </aside>
+</div>
+
+</main>
+
+</div><!-- /.shell -->
+
+<footer class="reveal-footer">
+  <div class="wrap">
+    <p>
+      <a class="notranslate" href="https://github.com/cruciblephp/laravents">GitHub</a><span class="no-print"> ·</span>
+      <a href="docs.html" class="i18n"><span data-i18n-default>Docs</span><span data-locale="es" class="notranslate">Documentación</span><span data-locale="it" class="notranslate">Documentazione</span></a><span class="no-print"> ·</span>
+      <a href="index.html" class="i18n"><span data-i18n-default>Home</span><span data-locale="es" class="notranslate">Inicio</span><span data-locale="it" class="notranslate">Home</span></a><span class="no-print"> ·</span>
+      <a href="https://github.com/cruciblephp/laravents/blob/main/LICENSE" class="i18n"><span data-i18n-default>License</span><span data-locale="es" class="notranslate">Licencia</span><span data-locale="it" class="notranslate">Licenza</span></a>
+    </p>
+    <p class="muted"><span class="no-print notranslate"><svg class="logo-mark logo-mark--sm" aria-hidden="true"><use href="#icon-laravents"/></svg> Laravents · by </span><a class="notranslate" href="https://github.com/lucianofedericopereira">Luciano Federico Pereira</a><span class="no-print"> · </span><span>MIT</span></p>
+  </div>
+</footer>
+
+<button type="button" class="back-to-top" id="back-to-top" aria-label="Back to top">
+  <svg aria-hidden="true"><use href="#icon-chevron-up"/></svg>
+</button>
+
+<script src="assets/site.js"></script>
+<script src="assets/locale.js"></script>
+<script type="module" src="assets/changelog.js"></script>
+</body>
+</html>

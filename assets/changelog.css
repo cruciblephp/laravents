@@ -1,0 +1,290 @@
+/* changelog.css — changelog.html only, loaded alongside site.css (shared
+   nav/search/back-to-top/footer chrome) + palettes.css. Structure: article +
+   vertical rule + sticky TOC sidebar, scroll-spy active state, auto-tagged
+   entry list, dedicated print block — built entirely on this site's own
+   design tokens (accent colors, background/border colors, spacing, radius,
+   duration, easing). No Google Fonts — system sans stack only, consistent
+   with the zero-external-dependency posture of the rest of this site.
+
+   The TOC sidebar uses plain `position: sticky` (not `fixed`, which would
+   take it out of its grid track and need JS to reposition it on resize) —
+   sticky stays inside its own grid column while tracking scroll, so this
+   is pure CSS. The vertical rule between the columns is a border-right on
+   aside rather than a separate stretched grid item — see the TOC sidebar
+   section below for why. */
+
+.changelog-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 48px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-fluid-hero-top) var(--space-20) 80px;
+  align-items: start;
+  text-align: left;
+}
+
+/* grid-row: 1 is explicit (not left to auto-placement) on both: their DOM
+   order (article, aside) doesn't match their column order (2, 1), and the
+   auto-placement cursor advances forward only — once it passes a column for
+   one item, the next item's earlier column no longer counts as free in that
+   same row, so each one silently lands in its own new implicit row instead
+   of sharing row 1. */
+.changelog-layout .article {
+  grid-row: 1; grid-column: 2 / 2;
+  min-width: 0;
+}
+
+.changelog-layout aside {
+  grid-row: 1; grid-column: 1 / 1;
+}
+
+.changelog-eyebrow {
+  font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent-2); font-weight: 700;
+  margin: 0 0 var(--space-8);
+}
+
+.changelog-layout h1.title {
+  font-size: clamp(2rem, 1.55rem + 1.82vw, 3rem);
+  line-height: 1.08; letter-spacing: -0.02em;
+  margin: 0 0 var(--space-12);
+}
+
+.changelog-layout p.dek {
+  font-size: 1.1rem; color: var(--muted); font-style: italic;
+  max-width: 34rem; margin: 0 0 var(--space-18);
+}
+
+.changelog-byline {
+  font-size: 0.8125rem; color: var(--muted);
+  display: flex; align-items: center; gap: var(--space-10);
+  margin-bottom: var(--space-18);
+}
+.changelog-byline .dot::before { content: "\00b7"; margin: 0 2px; color: var(--muted); }
+
+.changelog-loading { color: var(--muted); font-size: 0.9375rem; }
+
+/* ---------- Version sections ---------- */
+/* display:block overrides site.css's generic `header.hero, section, footer
+   { display: flex; justify-content: center }` — meant for top-level page
+   sections that wrap a single centered .wrap child, but it matches every
+   bare <section>, including these version blocks. Left as flex, its 3
+   direct children (h2, .date, .changelog-entry-list) laid out as a
+   wrapping flex row instead of stacking — the version number and date
+   sharing one line instead of the date sitting below it. */
+/* The L-shaped corner (border-top + border-left) belongs to #sections as a
+   whole, not to any individual section — one border, sized to exactly the
+   full stack of version sections ("changelog details"), instead of trying
+   to keep a separate byline border-bottom, an aside border-right, and each
+   section's own striped background all lined up with each other by hand.
+   Bleeds past the article's own box on the left by exactly the grid gap
+   (48px, .changelog-layout) so the border-left reaches the vertical
+   divider's position instead of stopping at the article's edge. Only
+   padding-top lives here (space under the new border-top line before the
+   first heading) — left/right padding stays on each section below, not
+   here, so a striped section's own background still spans this bled box's
+   full width edge-to-edge (border-left to the right edge) instead of
+   stopping wherever this container's own padding would otherwise start. */
+.changelog-layout #sections {
+  margin-left: -48px;
+  padding-top: var(--space-20);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* overflow:hidden clips the striped (square-cornered) section backgrounds
+     to this radius at the very top and bottom — without it they'd poke
+     past the rounded corners as flat edges.
+     No padding-bottom here (unlike padding-top above) — #sections' own box
+     then ends exactly where its last child's border-box does (no margin on
+     section.sec to leave a gap), so this one border wraps all four sides
+     flush against the actual content and a single border-radius rounds
+     every corner cleanly instead of needing a second element (and a second,
+     unrelated radius) just for the bottom-two corners. */
+}
+
+.changelog-layout section.sec {
+  display: block;
+  width: 100%;
+  scroll-margin-top: 96px;
+  /* Slightly less than site.css's shared --space-fluid-section (used as-is
+     for top-level page sections elsewhere) — these version blocks read as
+     one continuous list, not standalone page sections, so the full-size gap
+     felt heavier than it needed to. padding-bottom is uniform across every
+     section, striped or not — a plain section's own background is
+     transparent, so the extra space is invisible there and only the
+     striped ones show it, but keeping the rule unconditional means every
+     section-to-section gap stays the same size instead of needing a
+     special case for whichever section follows a striped one. */
+  padding-top: calc(var(--space-fluid-section) - var(--space-12));
+  padding-bottom: var(--space-20);
+  padding-left: calc(48px + var(--space-20));
+  padding-right: var(--space-20);
+}
+.changelog-layout section.sec:first-of-type { padding-top: 0; }
+.changelog-layout section.sec:nth-of-type(even) {
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+}
+
+.changelog-layout section.sec h2 {
+  font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em;
+  margin: 0 0 var(--space-4); text-align: left;
+}
+
+/* Revealed on heading hover/focus, same as .dl-icon's hover-only visibility
+   above — hidden at rest so the version number stays the whole visual
+   weight of the line, not competing with a permanent "#". */
+.changelog-layout section.sec h2 .heading-anchor {
+  display: inline-block; opacity: 0; margin-left: var(--space-8);
+  font-family: var(--mono); font-weight: 400; font-size: 0.75em;
+  color: var(--muted); text-decoration: none;
+  transition: opacity var(--duration-micro) var(--ease-out-expo), color var(--duration-micro) var(--ease-out-expo);
+}
+.changelog-layout section.sec h2:hover .heading-anchor,
+.changelog-layout section.sec h2 .heading-anchor:focus-visible {
+  opacity: 1;
+}
+.changelog-layout section.sec h2 .heading-anchor:hover {
+  color: var(--accent); text-decoration: none;
+}
+
+.changelog-layout section.sec .date {
+  font-size: 0.8125rem; color: var(--muted); letter-spacing: 0.02em;
+  margin: 0 0 var(--space-16);
+}
+
+.changelog-entry-list {
+  list-style: none; margin: 0 0 var(--space-16); padding: 0;
+  display: flex; flex-direction: column; gap: var(--space-10);
+}
+.changelog-entry-list li {
+  position: relative; padding-left: var(--space-18);
+  font-size: 0.9375rem; line-height: 1.6; color: var(--fg);
+}
+.changelog-entry-list li::before {
+  content: "\2013"; position: absolute; left: 0; color: var(--tree);
+}
+.changelog-entry-list code {
+  font-family: var(--mono); font-size: 0.85em;
+  background: var(--bg-inset); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 6px;
+}
+.changelog-entry-list a { color: var(--accent); }
+
+.tag {
+  display: inline-block; font-family: var(--mono); font-size: 0.75rem;
+  font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 4px; margin-right: var(--space-8);
+  vertical-align: 1px;
+}
+/* Deliberately drawn from the site's own two accent hues plus its neutral
+   family (--tree/--muted/--gold) rather than a fresh rainbow set — a tag
+   badge for every one of the 8 kinds in the site's own restrained
+   ember/flame palette would clash with it. Added/Fixed get the two
+   real accents (growth / attention); Security borrows --gold (already the
+   "muted amber" used for inline-code); the rest share the neutral family,
+   differentiated by which neutral and, for Deprecated, a strikethrough. */
+.tag-added       { background: color-mix(in srgb, var(--accent) 16%, var(--bg-subtle)); color: var(--accent); }
+.tag-fixed       { background: color-mix(in srgb, var(--accent-2) 16%, var(--bg-subtle)); color: var(--accent-2); }
+.tag-security    { background: color-mix(in srgb, var(--gold) 20%, var(--bg-subtle)); color: var(--gold); }
+.tag-improved    { background: color-mix(in srgb, var(--accent) 10%, color-mix(in srgb, var(--tree) 22%, var(--bg-subtle))); color: color-mix(in srgb, var(--accent) 55%, var(--tree)); }
+.tag-changed,
+.tag-updated     { background: color-mix(in srgb, var(--tree) 22%, var(--bg-subtle)); color: color-mix(in srgb, var(--tree) 70%, var(--fg)); }
+.tag-removed     { background: var(--bg-inset); color: var(--muted); }
+.tag-deprecated  { background: var(--bg-inset); color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* ---------- TOC sidebar ---------- */
+.changelog-layout aside {
+  position: sticky; top: 96px; align-self: start;
+}
+
+.changelog-toc-label {
+  font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 var(--space-10);
+}
+
+.changelog-toc-meta { display: flex; align-items: flex-end; margin: 0 0 var(--space-18); }
+.changelog-current-version {
+  display: inline-flex; align-items: center; gap: var(--space-8);
+  font-size: 1.25rem; font-weight: 700; color: var(--fg);
+  font-variant-numeric: tabular-nums; white-space: nowrap; text-decoration: none;
+  padding: 4px var(--space-8); margin: -4px calc(-1 * var(--space-8));
+  border-radius: 8px;
+  transition: background-color var(--duration-micro) var(--ease-out-expo);
+}
+/* A full var(--accent) pill (like the active TOC entry below) looked strong
+   in light mode but flips its on-accent text to near-black in dark mode —
+   the version number goes dim exactly when hovered, the opposite of what a
+   hover state should do. Neutral background instead (still beats the
+   generic `a:hover { text-decoration: underline }` from site.css); the text
+   stays --fg in both states so it never dims, and the icon is the one
+   element that visibly reacts, going from --muted to full --fg (the same
+   color headings use) instead of a tamer ink tint. */
+.changelog-current-version[href]:hover {
+  background: var(--bg-inset); text-decoration: none;
+}
+.changelog-current-version .dl-icon {
+  width: 0.8em; height: 0.8em; padding: 3px; margin: -3px;
+  box-sizing: content-box; border-radius: 6px; color: var(--muted);
+  transition: color var(--duration-micro) var(--ease-out-expo);
+}
+.changelog-current-version[href]:hover .dl-icon { color: var(--accent-2); }
+
+.changelog-toc-list {
+  position: relative; display: flex; flex-direction: column;
+  list-style: none; margin: 0; padding: 0; gap: var(--space-4);
+}
+.changelog-toc-list li { position: relative; color: var(--muted); }
+.changelog-toc-list li a {
+  position: relative; z-index: 1; display: inline-block; color: inherit;
+  font-size: 0.875rem; text-decoration: none;
+  padding: 6px var(--space-10); margin-inline: -6px; border-radius: 6px;
+  transition: background-color var(--duration-micro) var(--ease-out-expo), color var(--duration-micro) var(--ease-out-expo);
+}
+.changelog-toc-list li a:hover { background: var(--bg-subtle); color: var(--fg); }
+.changelog-toc-list li.active { color: var(--on-accent); font-weight: 600; }
+.changelog-toc-list li.active a { background: var(--accent); }
+.changelog-toc-list li.active a:hover { background: var(--accent); }
+
+@media (max-width: 760px) {
+  .changelog-layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: var(--space-fluid-section);
+  }
+  .changelog-layout aside { display: none; }
+  /* No divider column to bleed toward once the grid collapses to one
+     column — the desktop-only bleed/border-left above would otherwise
+     overflow the layout's own left padding. border-top stays: it's still a
+     sensible separator between the byline and the first entry. */
+  .changelog-layout #sections {
+    margin-left: 0;
+    padding-top: var(--space-16);
+    border-left: none;
+  }
+  .changelog-layout section.sec {
+    padding-left: var(--space-16);
+    padding-right: var(--space-16);
+  }
+}
+
+@media print {
+  .changelog-layout { display: block; max-width: 100%; padding: 0; margin: 0; }
+  .changelog-layout .article { max-width: 100%; margin: 0; }
+  .changelog-layout aside { display: none !important; }
+  .changelog-layout #sections {
+    margin-left: 0; padding: 0; border: none; border-radius: 0; overflow: visible;
+  }
+  .changelog-layout section.sec {
+    padding-top: 14px; padding-left: 0; padding-right: 0; break-inside: auto;
+    background: none !important;
+  }
+  .changelog-layout section.sec h2 { break-after: avoid-page; orphans: 3; }
+  .changelog-entry-list li { break-inside: avoid-page; orphans: 2; widows: 2; }
+  .tag {
+    display: inline; background: transparent !important; border: none;
+    border-radius: 0; padding: 0; margin-right: 0.3em; text-decoration: none;
+    font-size: inherit; font-weight: 700; text-transform: none; letter-spacing: normal;
+    color: inherit;
+  }
+  .tag::after { content: ":"; }
+}

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<title>Laravents docs</title>
+<meta name="author" content="Luciano Federico Pereira" />
+<meta name="description" content="The Laravents manual, from installation to the reference, read from the repository's own Markdown." />
+<link rel="canonical" href="https://cruciblephp.github.io/laravents/docs.html" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Laravents docs" />
+<meta property="og:description" content="The Laravents manual, from installation to the reference." />
+<meta name="twitter:card" content="summary" />
+<meta name="theme-color" content="#faf8f1" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="assets/favicon.ico" sizes="32x32" />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<link rel="manifest" href="assets/site.webmanifest" />
+<link rel="stylesheet" href="assets/docs.css" />
+</head>
+<body data-repo="cruciblephp/laravents" data-source="">
+
+<!-- The shell only: assets/docs.js renders the repository's own Markdown (README.md, docs/*.md), served beside this page. -->
+
+<svg style="position:absolute; width:0; height:0; overflow:hidden" aria-hidden="true">
+  <!-- The mark: assets/laravents.svg's own paths, the viewBox cropped to the artwork. -->
+  <symbol id="icon-laravents" viewBox="37.8 112 316.9 280.32">
+    <path fill="#e80c08" d="M 200.00,341.63 L 315.00,275.20 L 309.00,264.80 L 200.00,327.77 L 94.00,266.54 L 94.00,150.00 L 82.00,150.00 L 82.00,273.46 Z M 200.00,392.32 L 354.70,302.99 L 339.70,277.01 L 200.00,357.68 L 67.80,281.34 L 67.80,112.00 L 37.80,112.00 L 37.80,298.66 Z"/>
+    <path fill="#e80c08" d="M 200.00,142.31 L 178.89,154.50 L 200.00,166.69 L 221.11,154.50 Z M 176.89,182.35 L 198.00,194.54 L 198.00,170.15 L 176.89,157.96 Z M 202.00,194.54 L 223.11,182.35 L 223.11,157.96 L 202.00,170.15 Z M 151.50,226.31 L 130.39,238.50 L 151.50,250.69 L 172.61,238.50 Z M 248.50,226.31 L 227.39,238.50 L 248.50,250.69 L 269.61,238.50 Z M 128.39,266.35 L 149.50,278.54 L 149.50,254.15 L 128.39,241.96 Z M 153.50,278.54 L 174.61,266.35 L 174.61,241.96 L 153.50,254.15 Z M 246.50,278.54 L 246.50,254.15 L 225.39,241.96 L 225.39,266.35 Z M 271.61,266.35 L 271.61,241.96 L 250.50,254.15 L 250.50,278.54 Z"/>
+    <path fill="#f17510" d="M 186.55,215.50 L 200.00,223.27 L 213.45,215.50 L 200.00,207.73 Z M 198.50,241.40 L 198.50,225.87 L 185.05,218.10 L 185.05,233.63 Z M 214.95,233.63 L 214.95,218.10 L 201.50,225.87 L 201.50,241.40 Z"/>
+  </symbol>
+</svg>
+
+<header class="topbar">
+  <a class="brand" href="./">
+    <svg class="logo-mark" aria-hidden="true"><use href="#icon-laravents"/></svg>
+    <span>Laravents</span>
+  </a>
+  <button id="search-trigger" class="search-trigger" type="button" aria-haspopup="dialog">
+    <span>Search the docs</span>
+    <kbd>/</kbd>
+  </button>
+  <nav class="topnav">
+    <a href="./">Home</a>
+    <a href="changelog.html">Changelog</a>
+    <a href="https://github.com/cruciblephp/laravents">GitHub</a>
+  </nav>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <h2>Documents</h2>
+      <div class="stepper">
+        <button id="prev-entry" type="button" title="Previous document (left arrow)"
+                aria-label="Previous document">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" /></svg>
+        </button>
+        <button id="next-entry" type="button" title="Next document (right arrow)"
+                aria-label="Next document">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" /></svg>
+        </button>
+      </div>
+    </div>
+    <div id="nav" class="nav"></div>
+  </aside>
+  <main>
+    <article id="doc" aria-busy="true">
+      <p class="loading">Loading the docs...</p>
+    </article>
+  </main>
+  <aside class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <div id="toc"></div>
+  </aside>
+</div>
+
+<div id="search-modal" class="search-modal" role="dialog" aria-modal="true" aria-label="Search the docs" hidden>
+  <div class="search-panel">
+    <input id="search-input" type="search" placeholder="Jump to a section or a document" autocomplete="off"
+           spellcheck="false" aria-controls="search-results" />
+    <div id="search-results" class="search-results"></div>
+  </div>
+</div>
+
+<noscript>
+  <p class="loading">
+    This page renders the Markdown in the
+    <a href="https://github.com/cruciblephp/laravents">repository</a> —
+    <a href="https://github.com/cruciblephp/laravents/blob/main/README.md">README.md</a> and
+    <a href="https://github.com/cruciblephp/laravents/blob/main/docs/README.md">the manual</a> first —
+    which GitHub also renders directly if you would rather read it there.
+  </p>
+</noscript>
+
+<script src="assets/docs.js"></script>
+</body>
+</html>

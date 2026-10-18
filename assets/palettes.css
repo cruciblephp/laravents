@@ -1,0 +1,207 @@
+/* Named palettes, selectable via [data-palette="name"] on <html> instead of
+ * the OS prefers-color-scheme setting — site.css's own :root is already one
+ * such palette (light + dark), these are more of the same. Attribute
+ * selectors out-specificity a bare `:root` inside @media(prefers-color-scheme),
+ * so a palette here always wins over the OS default regardless of load order.
+ *
+ * Each source is a published base16 scheme (16 hex slots); every palette
+ * below reads the same eight slots for the same role:
+ *
+ *   --bg base00   --bg-subtle base01   --bg-inset base02   --border base03
+ *   --tree base03 (shares --border's slot — both are faint structural
+ *                  lines, never a fill sitting against its own border)
+ *   --muted base04   --fg base05   --gold base0A   --accent-2 base09
+ *   --accent base0D  --on-accent base00
+ *
+ * --shadow is not hand-tuned per palette — every dark palette reuses this
+ * file's own dark --shadow value, every light one reuses its own light
+ * value. --band needs no override: it's `color-mix(--accent, --bg)`
+ * already, so it recomputes from whichever of those a palette sets.
+ *
+ * No oklch() companion line for any value below, unlike site.css's own
+ * :root — a browser without oklch() support still gets a fully correct
+ * palette from the hex line alone. */
+
+:root[data-palette='gruvbox-dark'] {
+  color-scheme: dark;
+  --bg: #282828;
+  --bg-subtle: #3c3836;
+  --bg-inset: #504945;
+  --border: #665c54;
+  --tree: #665c54;
+  --muted: #bdae93;
+  --fg: #d5c4a1;
+  --gold: #fabd2f;
+  --accent-2: #fe8019;
+  --accent: #83a598;
+  --on-accent: #282828;
+}
+
+:root[data-palette='gruvbox-light'] {
+  color-scheme: light;
+  --bg: #fbf1c7;
+  --bg-subtle: #ebdbb2;
+  --bg-inset: #d5c4a1;
+  --border: #bdae93;
+  --tree: #bdae93;
+  --muted: #7c6f64;
+  --fg: #3c3836;
+  --gold: #d79921;
+  --accent-2: #d65d0e;
+  --accent: #458588;
+  --on-accent: #fbf1c7;
+}
+
+:root[data-palette='dracula'] {
+  color-scheme: dark;
+  --bg: #282a36;
+  --bg-subtle: #21222c;
+  --bg-inset: #44475a;
+  --border: #6272a4;
+  --tree: #6272a4;
+  --muted: #9ea8c7;
+  --fg: #f8f8f2;
+  --gold: #f1fa8c;
+  --accent-2: #ffb86c;
+  --accent: #bd93f9;
+  --on-accent: #282a36;
+}
+
+:root[data-palette='catppuccin-mocha'] {
+  color-scheme: dark;
+  --bg: #1e1e2e;
+  --bg-subtle: #181825;
+  --bg-inset: #313244;
+  --border: #45475a;
+  --tree: #45475a;
+  --muted: #585b70;
+  --fg: #cdd6f4;
+  --gold: #f9e2af;
+  --accent-2: #fab387;
+  --accent: #89b4fa;
+  --on-accent: #1e1e2e;
+}
+
+:root[data-palette='catppuccin-latte'] {
+  color-scheme: light;
+  --bg: #eff1f5;
+  --bg-subtle: #e6e9ef;
+  --bg-inset: #ccd0da;
+  --border: #bcc0cc;
+  --tree: #bcc0cc;
+  --muted: #acb0be;
+  --fg: #4c4f69;
+  --gold: #df8e1d;
+  --accent-2: #fe640b;
+  --accent: #1e66f5;
+  --on-accent: #eff1f5;
+}
+
+:root[data-palette='rose-pine'] {
+  color-scheme: dark;
+  --bg: #191724;
+  --bg-subtle: #1f1d2e;
+  --bg-inset: #26233a;
+  --border: #6e6a86;
+  --tree: #6e6a86;
+  --muted: #908caa;
+  --fg: #e0def4;
+  --gold: #ebbcba;
+  --accent-2: #f6c177;
+  --accent: #c4a7e7;
+  --on-accent: #191724;
+}
+
+:root[data-palette='rose-pine-dawn'] {
+  color-scheme: light;
+  --bg: #faf4ed;
+  --bg-subtle: #fffaf3;
+  --bg-inset: #f2e9de;
+  --border: #9893a5;
+  --tree: #9893a5;
+  --muted: #797593;
+  --fg: #575279;
+  --gold: #d7827e;
+  --accent-2: #ea9d34;
+  --accent: #907aa9;
+  --on-accent: #faf4ed;
+}
+
+:root[data-palette='ayu-dark'] {
+  color-scheme: dark;
+  --bg: #0b0e14;
+  --bg-subtle: #131721;
+  --bg-inset: #202229;
+  --border: #3e4b59;
+  --tree: #3e4b59;
+  --muted: #bfbdb6;
+  --fg: #e6e1cf;
+  --gold: #ffb454;
+  --accent-2: #ff8f40;
+  --accent: #59c2ff;
+  --on-accent: #0b0e14;
+}
+
+:root[data-palette='ayu-light'] {
+  color-scheme: light;
+  --bg: #f8f9fa;
+  --bg-subtle: #edeff1;
+  --bg-inset: #d2d4d8;
+  --border: #a0a6ac;
+  --tree: #a0a6ac;
+  --muted: #8a9199;
+  --fg: #5c6166;
+  --gold: #f2ae49;
+  --accent-2: #fa8d3e;
+  --accent: #399ee6;
+  --on-accent: #f8f9fa;
+}
+
+:root[data-palette='github-dark'] {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --bg-subtle: #161b22;
+  --bg-inset: #484f58;
+  --border: #6e7681;
+  --tree: #6e7681;
+  --muted: #8b949e;
+  --fg: #c9d1d9;
+  --gold: #bb8009;
+  --accent-2: #79c0ff;
+  --accent: #d2a8ff;
+  --on-accent: #0d1117;
+}
+
+:root[data-palette='github-light'] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-subtle: #f6f8fa;
+  --bg-inset: #afb8c1;
+  --border: #8c959f;
+  --tree: #8c959f;
+  --muted: #6e7781;
+  --fg: #424a53;
+  --gold: #bf8700;
+  --accent-2: #0550ae;
+  --accent: #8250df;
+  --on-accent: #ffffff;
+}
+
+/* Every dark palette above reuses Forest dark's own shadow; every light one
+   reuses Forest light's — see site.css's :root and its dark block. Shadow
+   color doesn't need to hue-match the palette to read correctly. */
+:root[data-palette='gruvbox-dark'],
+:root[data-palette='dracula'],
+:root[data-palette='catppuccin-mocha'],
+:root[data-palette='rose-pine'],
+:root[data-palette='ayu-dark'],
+:root[data-palette='github-dark'] {
+  --shadow: 0 0 0 1px rgba(47, 54, 38, 0.6), 0 8px 24px rgba(5, 8, 3, 0.6);
+}
+:root[data-palette='gruvbox-light'],
+:root[data-palette='catppuccin-latte'],
+:root[data-palette='rose-pine-dawn'],
+:root[data-palette='ayu-light'],
+:root[data-palette='github-light'] {
+  --shadow: 0 1px 3px rgba(60, 50, 30, 0.12), 0 8px 24px rgba(60, 50, 30, 0.08);
+}

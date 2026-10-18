@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Laravents\Attributes\After;
+use {{ namespacedPointcut }};
+
+final class {{ class }}
+{
+    #[After(pointcut: {{ pointcut }}::class)]
+    public function handle(mixed $result{{ rule }}): void
+    {
+        //
+    }
+}

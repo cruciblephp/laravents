@@ -1,0 +1,81 @@
+{
+    "name": "laravents/laravents",
+    "description": "Eloquent for events. Modules for Laravel. Commands, queries and events with conventions, attributes and an outbox, so modules talk through a public API and never through each other's models.",
+    "type": "library",
+    "keywords": [
+        "laravel",
+        "events",
+        "cqrs",
+        "outbox",
+        "modules",
+        "modular-monolith"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Luciano Federico Pereira"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/cruciblephp/laravents/issues",
+        "source": "https://github.com/cruciblephp/laravents"
+    },
+    "require": {
+        "php": "^8.3",
+        "laravel/framework": "^13.0",
+        "spatie/php-structure-discoverer": "^2.4"
+    },
+    "require-dev": {
+        "cruciblephp/crucible": "^1.1.5",
+        "larastan/larastan": "^3.13",
+        "laravel/pint": "^1.27",
+        "orchestra/testbench": "^11.3",
+        "rector/rector": "^2.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "Laravents\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Laravents\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Modules\\": "workbench/modules/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Laravents\\LaraventsServiceProvider"
+            ],
+            "aliases": {
+                "Laravents": "Laravents\\Facades\\Laravents"
+            }
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@prepare"
+        ],
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "psr": "@composer dump-autoload --optimize --strict-psr",
+        "lint": "pint --test",
+        "refactor": "rector process --dry-run",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "test": "crucible",
+        "check": [
+            "@psr",
+            "@lint",
+            "@refactor",
+            "@analyse",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

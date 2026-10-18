@@ -1,0 +1,42 @@
+name: Site
+
+# Loads every page of the site in a real browser and fails on a script error, a 404, a broken same-site link,
+# or a docs page that could not load its Markdown (scripts/check-site.mjs). Pins as in ci.yml.
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - '*.html'
+      - '**.md'
+      - 'assets/**'
+      - 'scripts/check-site.mjs'
+      - '.github/workflows/site.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Every page loads, every link resolves
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright@1.62.1
+          npx playwright install --with-deps chromium
+
+      - name: Check the site
+        run: node scripts/check-site.mjs

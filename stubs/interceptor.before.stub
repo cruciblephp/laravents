@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Laravents\Attributes\Before;
+use Laravents\Bus\Message;
+use {{ namespacedPointcut }};
+
+final class {{ class }}
+{
+    #[Before(pointcut: {{ pointcut }}::class)]
+    public function handle(Message $message{{ rule }}): void
+    {
+        //
+    }
+}

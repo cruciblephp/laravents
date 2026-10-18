@@ -1,0 +1,20 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/cruciblephp/crucible/phpstan/extension.neon
+
+parameters:
+    level: max
+    phpVersion: 80300
+    paths:
+        - src
+        - config
+        - database
+        - routes
+        - workbench
+        - tests
+    excludePaths:
+        # Deliberately names a class that does not exist, to prove discovery rejects it.
+        - tests/Fixtures/Interception/Invalid/UnknownPointcut.php
+    configDirectories:
+        - config
+        - database

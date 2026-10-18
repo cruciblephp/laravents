@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Laravents\Concerns\Askable;
+
+/**
+ * Query {{ routingKey }}.
+ */
+final readonly class {{ class }}
+{
+    use Askable;
+
+    public function __construct(
+        //
+    ) {}
+}

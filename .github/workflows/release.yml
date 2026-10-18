@@ -1,0 +1,54 @@
+name: Release
+
+# On a v* tag. verify is read-only; draft is the only job with write access, and only to create a DRAFT release
+# that a person publishes. Every action is pinned to a commit SHA, as in ci.yml.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: The tag, the CHANGELOG and the archive agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
+        with:
+          php-version: '8.3'
+          tools: none
+
+      # composer.json has no version field: the CHANGELOG's dated heading is the version record.
+      - name: The CHANGELOG has a dated entry for the tag
+        run: |
+          if ! grep -Eq "^## ${GITHUB_REF_NAME//./\\.} - [0-9]{4}-[0-9]{2}-[0-9]{2}\$" CHANGELOG.md; then
+            echo "CHANGELOG.md has no '## $GITHUB_REF_NAME - YYYY-MM-DD' heading."
+            exit 1
+          fi
+          echo "CHANGELOG.md has a dated entry for $GITHUB_REF_NAME."
+
+      - name: The archive ships the package and nothing else
+        run: php .github/scripts/check-archive.php "$GITHUB_REF_NAME"
+
+  draft:
+    name: Draft the GitHub release
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --verify-tag \
+            --title "Laravents $GITHUB_REF_NAME" \
+            --generate-notes \
+            --notes "What changed: [CHANGELOG.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/CHANGELOG.md). Install: \`composer require laravents/laravents\`."

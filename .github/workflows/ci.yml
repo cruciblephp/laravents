@@ -1,0 +1,75 @@
+name: CI
+
+# Every action is pinned to a commit SHA, never a tag; the comment records the version. Re-pin deliberately.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: 'composer check (PHP ${{ matrix.php }})'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_sqlite, sqlite3
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Get the Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ matrix.php }}-${{ hashFiles('composer.json') }}
+          restore-keys: composer-${{ matrix.php }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Check
+        run: composer check
+
+      - name: Nothing regenerated
+        run: git diff --exit-code
+
+      # One job collects coverage and reports to code scanning.
+      - name: Coverage and SARIF
+        if: matrix.php == '8.5'
+        run: composer test -- --coverage --report sarif:${{ runner.temp }}/crucible.sarif
+
+      # Code scanning takes uploads from a private repository only with Advanced Security: uploaded once public.
+      - name: Upload SARIF
+        if: matrix.php == '8.5' && always() && !github.event.repository.private
+        uses: github/codeql-action/upload-sarif@ce5e7eeac396d720fe2d802714996c8ce561e311 # v3.39.0
+        with:
+          sarif_file: ${{ runner.temp }}/crucible.sarif
+          category: crucible

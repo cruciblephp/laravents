@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Attribute;
+
+/**
+ * Pointcut: the interceptors that name this attribute apply to every handler method or class that carries it.
+ */
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS)]
+final readonly class {{ class }}
+{
+    public function __construct() {}
+}

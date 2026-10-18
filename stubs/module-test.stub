@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Modules;
+
+use Illuminate\Support\Facades\Artisan;
+use Tests\TestCase;
+
+final class {{ module }}Test extends TestCase
+{
+    public function test_the_module_lists_its_handlers(): void
+    {
+        $this->assertSame(0, Artisan::call('laravents:list', ['--module' => '{{ module }}']));
+    }
+}

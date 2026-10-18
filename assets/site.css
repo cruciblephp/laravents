@@ -1,0 +1,1529 @@
+/* Crucible palette — treegen2's Forest palette with the mark's own two
+   colours as the accents: ember #e80c08 and flame #f17510, the only two
+   fills in assets/crucible.svg (src/Console/Style/Brand.php names them).
+   Every other token is Forest's, unchanged. */
+  :root {
+    /* Every color declared twice: hex, then OKLCH, same property name — a
+       browser that doesn't understand oklch() keeps the hex line (CSS
+       cascade, not a hack). OKLCH wins where color-mix() blends these. */
+    --bg: #faf8f1; --bg: oklch(97.9% 0.009 93.6);
+    --bg-subtle: #f2ede1; --bg-subtle: oklch(94.7% 0.017 88.0);
+    --bg-inset: #ece6d7; --bg-inset: oklch(92.6% 0.021 88.7);
+    --border: #ddd5c3; --border: oklch(87.5% 0.026 86.9);
+    --fg: #2c2a22; --fg: oklch(28.4% 0.014 95.5);
+    --muted: #6d6857; --muted: oklch(51.7% 0.027 93.5);
+    --accent: #e80c08; --accent: oklch(58.7% 0.237 29.1);        /* ember — brand / links / buttons */
+    --accent-2: #f17510; --accent-2: oklch(69.6% 0.179 50.5);    /* flame — eyebrows / highlights */
+    --tree: #a89f88; --tree: oklch(70.4% 0.034 89.2);            /* taupe — connectors */
+    --on-accent: #ffffff; --on-accent: oklch(100% 0 0);
+    --gold: #726b4c; --gold: oklch(52.6% 0.046 96.9);            /* inline-code text — barely-there muted yellow on a green-tinted chip */
+    --band: color-mix(in srgb, var(--accent) 5%, var(--bg)); /* full-bleed section band — distinct from --bg-subtle so cards (.variant/.step/.accordion-item) still read as raised */
+    --shadow: 0 1px 3px rgba(60, 50, 30, 0.12), 0 8px 24px rgba(60, 50, 30, 0.08);
+
+    /* ---------- Spacing ----------
+       Named for their own px value, not a Tailwind-style nearest-step —
+       10px/14px/18px/22px etc. are real, repeated, deliberate values here,
+       and renaming to the nearest power-of-2 would quietly shift hand-tuned
+       layouts. Only values that repeat across components are tokenized;
+       one-offs (and anything derived FROM another specific value, e.g. the
+       hamburger bar's translateY) stay literal on purpose. */
+    --space-2: 2px;
+    --space-4: 4px;
+    --space-6: 6px;
+    --space-8: 8px;
+    --space-10: 10px;
+    --space-12: 12px;
+    --space-14: 14px;
+    --space-16: 16px;
+    --space-18: 18px;
+    --space-20: 20px;
+    --space-22: 22px;
+    /* Fluid clamp(), reserved for the two values where cross-device scaling
+       is actually visible (section/hero rhythm) — floor-pinned at today's
+       flat value, so this only ever adds room on a bigger screen. */
+    --space-fluid-section: clamp(56px, 48.7px + 1.82vw, 72px); /* was flat 56px */
+    --space-fluid-hero-top: clamp(76px, 66.9px + 2.27vw, 96px); /* was flat 76px */
+    /* Sharp deceleration ("snap to rest") instead of plain ease/ease-in-out
+       for general hover/UI transitions — reads noticeably more deliberate/
+       premium than the linear-ish feel of the built-in keyword. Left the
+       handful of deliberately bouncy/overshoot transitions (.step-number,
+       .nav .brand .logo) on their own cubic-bezier(.34,1.56,.64,1), a
+       different, distinctly playful curve this isn't meant to replace. */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    /* Symmetric in+out — for cases like the hero fade-in where
+       --ease-out-expo's front-loaded deceleration is wrong (it visually
+       "finishes" early since nearly all the change happens at the start).
+       This spreads it evenly across the whole duration instead. */
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    /* Named duration scale instead of raw numbers scattered through every
+       transition/animation declaration. */
+    --duration-instant: .1s;
+    --duration-micro: .15s;
+    --duration-fast: .2s;
+    --duration-quick: .25s;
+    --duration-moderate: .3s;
+    --duration-base: .35s;
+    --duration-relaxed: .4s;
+    --duration-slow: .75s;
+    --duration-slower: .7s;
+    --duration-panel: .9s;
+    --duration-hero: 1.9s;
+    --radius: 12px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* Warm neutrals, Laravel's dark set, in place of Forest's green-tinted
+         charcoal: against a red mark the green cast read as murk, and the
+         lighter text lifts legibility — fg 15.5:1, muted 6.9:1 on --bg. */
+      --bg: #161615; --bg: oklch(20.0% 0.002 106.6);            /* warm near-black */
+      --bg-subtle: #1b1b18; --bg-subtle: oklch(22.1% 0.006 106.9);
+      --bg-inset: #0e0e0c; --bg-inset: oklch(16.3% 0.004 106.8);
+      --border: #3e3e3a; --border: oklch(36.2% 0.007 106.7);
+      --fg: #ededec; --fg: oklch(94.6% 0.001 106.4);             /* warm off-white */
+      --muted: #a1a09a; --muted: oklch(70.5% 0.009 98.9);
+      --accent: #e80c08; --accent: oklch(58.7% 0.237 29.1);     /* ember — the mark does not change with the theme */
+      --accent-2: #f17510; --accent-2: oklch(69.6% 0.179 50.5); /* flame */
+      --tree: #62605b; --tree: oklch(48.9% 0.008 88.7);         /* warm grey — connectors */
+      /* White, not Forest's dark ink: on ember, white measures 4.68:1 and
+         #12160c only 3.92:1. The value is the light theme's own. */
+      --on-accent: #ffffff; --on-accent: oklch(100% 0 0);
+      --gold: #a49a76; --gold: oklch(68.5% 0.051 94.4);         /* inline-code text — barely-there muted yellow */
+      --shadow: 0 0 0 1px rgba(62, 62, 58, 0.6), 0 8px 24px rgba(0, 0, 0, 0.5);
+      /* Section bands lift toward the cream text rather than toward ember:
+         a red wash on every other section was the darkest-feeling thing
+         on the page. */
+      --band: color-mix(in srgb, var(--fg) 4%, var(--bg));
+    }
+  }
+
+  * { box-sizing: border-box; }
+  img, svg, video { max-width: 100%; height: auto; }
+  /* overflow-x:clip (not hidden) here on purpose: `hidden` on only one axis
+     forces the browser to compute the other axis as `auto` (CSS Overflow
+     spec), which can turn body/html into their own scroll container and
+     break position:sticky descendants — `clip` is explicitly exempt from
+     that coercion, so it blocks horizontal shift without the side effect. */
+  html { scroll-behavior: smooth; overflow-x: clip; font-size: 115%; }
+  /* Main document scrollbar, themed to match the palette instead of each
+     browser/OS default (Firefox via scrollbar-width/-color, Chrome/Safari/
+     Edge via ::-webkit-scrollbar*) — same thumb language as the code-block
+     scrollbars, just sized for the page chrome rather than an inline block. */
+  html { scrollbar-width: thin; scrollbar-color: var(--tree) var(--bg-subtle); }
+  html::-webkit-scrollbar { width: 12px; }
+  html::-webkit-scrollbar-track { background: var(--bg-subtle); }
+  html::-webkit-scrollbar-thumb {
+    background-color: var(--tree);
+    border-radius: 999px;
+    border: 3px solid var(--bg-subtle);
+    background-clip: padding-box;
+  }
+  html::-webkit-scrollbar-thumb:hover { background-color: var(--accent); }
+  body {
+    margin: 0;
+    max-width: 100vw;
+    overflow-x: clip;
+    font-family: var(--sans);
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    /* Root-level safety net: a long unbreakable token (a `code` snippet,
+       an attribute example) inside any flex/grid item would otherwise
+       hit that item's default min-width:auto and push past the edge —
+       invisible once clipped by overflow-x:clip — instead of wrapping. */
+    overflow-wrap: break-word;
+  }
+  /* FOUC guard: hidden until site.js confirms the DOM/CSS are actually
+     ready (.loaded, added at the top of site.js — plus an inline
+     setTimeout fallback in index.html's head in case that script never
+     loads at all). Only under .js — without it there's no script to ever
+     add .loaded, so a no-JS visitor must see the page immediately instead
+     of a permanently blank one. */
+  .js body:not(.loaded) { visibility: hidden; }
+  /* visibility:hidden does NOT pause CSS animations — the hero SVG's
+     entrance sequence is autoplay @keyframes (not JS-triggered), so its
+     clock starts ticking the instant this rule is applied, regardless of
+     the body still being hidden above. Without this, any load delay
+     before .loaded lands eats into the animation's timeline, so it can
+     appear to start mid-way (or already finished) the moment the page
+     becomes visible instead of playing from the beginning. Suppressing it
+     entirely until .loaded is present means it always starts fresh
+     exactly when the user can actually see it. */
+  .js body:not(.loaded) .hero-mark,
+  .js body:not(.loaded) .hero-visual {
+    animation: none !important;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  /* Baseline for plain content links (e.g. the examples/brand link) — earthy
+     --muted ring instead of the browser-default bright/white one, matching
+     .copy-btn. Component-specific rules (.nav a.link, etc.) are all
+     class-based and stay more specific than this bare-element selector, so
+     they continue to win where a different color was chosen deliberately. */
+  a:focus-visible { outline: 2px solid var(--muted); outline-offset: 2px; border-radius: 2px; }
+  a:hover { text-decoration: underline; }
+  /* The scrolling page column. Sits above the fixed footer (z-index) so the
+     footer stays hidden underneath until .shell's bottom spacer scrolls past it. */
+  .shell {
+    position: relative; z-index: 1;
+    background:
+      radial-gradient(1200px 500px at 50% -60px, color-mix(in srgb, var(--accent) 16%, transparent), transparent),
+      var(--bg);
+    /* Flex-centre every full-width band (nav, hero, sections). */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* main has no declared width; .shell's align-items:center (not stretch)
+     otherwise lets it shrink-to-fit its widest descendant (e.g. the 480px
+     min-width comparison table) and grow past the viewport — centered, so
+     overflow-x:clip silently trims equal slices off BOTH edges instead of
+     wrapping, cutting text on both sides at once. */
+  /* The ember glow behind the hero, at half strength in the dark theme,
+     where 16% of a saturated red over near-black reads as a stain. */
+  @media (prefers-color-scheme: dark) {
+    .shell {
+      background:
+        radial-gradient(1200px 500px at 50% -60px, color-mix(in srgb, var(--accent) 8%, transparent), transparent),
+        var(--bg);
+    }
+  }
+  main { display: block; width: 100%; min-width: 0; }
+  header.hero, section, footer { width: 100%; display: flex; justify-content: center; }
+  .wrap { width: 100%; max-width: 900px; padding: 0 var(--space-20); text-align: center; }
+  .wrap-wide { max-width: 1080px; }
+
+  /* ---------- Skip link ---------- */
+  .skip-link {
+    position: absolute; left: -9999px; top: 0; z-index: 200;
+    background: var(--accent); color: var(--on-accent);
+    padding: var(--space-10) var(--space-16); border-radius: 0 0 8px 0; font-weight: 600;
+  }
+  .skip-link:focus { left: 0; }
+
+  /* ---------- Top nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 50; width: 100%;
+    display: flex; justify-content: center;
+    background: none;
+    border-bottom: 1px solid transparent;
+    transition: background var(--duration-fast) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-out-expo), opacity var(--duration-fast) var(--ease-out-expo);
+  }
+  /* Google Translate rewrites text nodes progressively over a real (if
+     short) span of time after the combo's change event fires — with
+     nothing hiding it, the nav sits in the pre-translation language,
+     then visibly snaps mid-word as Google's rewrite reaches it.
+     assets/locale.js toggles this class for exactly that window,
+     watching the DOM for Google's own mutations rather than guessing a
+     fixed delay. */
+  .nav.translating { opacity: 0; }
+  .nav.scrolled {
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(1.4) blur(8px);
+    -webkit-backdrop-filter: saturate(1.4) blur(8px);
+    border-bottom-color: var(--border);
+  }
+  /* Nav's own max-width — deliberately wider than .wrap's 900px (readable
+     prose width): a toolbar of short link labels needs real room, or
+     trailing links (Options, Features, FAQ) silently overflow into the
+     scrollable-but-invisible .nav .links strip instead of just being visible. */
+  .nav .wrap { display: flex; align-items: center; gap: 1.125rem; padding: 0.75rem 1.25rem; max-width: 1360px; text-align: left; }
+  .nav .brand { font-weight: 700; display: flex; align-items: center; gap: 0.5rem; color: var(--fg); flex: none; transition: color var(--duration-micro) var(--ease-out-expo); }
+  .nav .brand:hover { text-decoration: none; color: var(--accent); }
+  /* Same playful bounce curve as .step-number's hover — the emoji gets a
+     little wobble instead of just a flat color change. */
+  .nav .brand .logo { font-size: 1.25rem; display: inline-block; transition: transform var(--duration-moderate) cubic-bezier(.34, 1.56, .64, 1); }
+  .nav .brand:hover .logo { transform: scale(1.15) rotate(-8deg); }
+  /* padding-inline: the first/last link's horizontal negative margin (below)
+     bleeds its padded ring-box past this scroll container's own left/right
+     edge — with overflow-x:auto you can't scroll into that negative space,
+     so it just gets clipped. This padding gives both edges room to absorb it. */
+  /* Transparent border reserved here so .nav.is-compact .links below has a
+     defined color to transition FROM — without it, border-color's initial
+     value resolves to currentcolor (a real, visible color) and eases down
+     to transparent on the first .is-compact toggle, flashing a stray line
+     under the nav. */
+  .nav .links { display: flex; align-items: center; gap: 1.125rem; overflow-x: auto; scrollbar-width: none; padding-inline: var(--space-8); border: 1px solid transparent; }
+  .nav .links::-webkit-scrollbar { display: none; }
+  .nav .spacer { flex: 1; }
+  /* padding+negative-margin (horizontal only): grows the hit area and gives
+     the inset focus ring room to clear the glyphs instead of drawing
+     through them. .nav .links has overflow-x:auto, which per CSS's paired-
+     axis rule forces overflow-y to compute as auto too even though it's
+     never set explicitly — a *vertical* negative margin let the padded
+     ring-box bleed above/below where the container's auto-height accounts
+     for it, and that bleed got silently clipped. Only cancelling the
+     horizontal margin keeps the link-to-link rhythm unchanged while
+     letting the vertical padding genuinely grow the box (a few px taller
+     nav bar), so there's nothing left to clip on that axis. */
+  .nav a.link {
+    color: var(--muted); font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+    padding: 5px var(--space-8); margin: 0 calc(var(--space-8) * -1); border-radius: 6px;
+    transition: color var(--duration-micro) var(--ease-out-expo), background-color var(--duration-micro) var(--ease-out-expo);
+  }
+  .nav a.link:hover { color: var(--accent); text-decoration: none; }
+  .nav a.link.active { color: var(--accent); }
+  /* The mobile dropdown (below) clips to overflow:hidden/rounded corners while open —
+     inset ring so it never gets chewed against those edges. */
+  .nav a.link:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; border-radius: 6px; }
+
+  /* Modifier for links that take you to a different HTML document than the
+     one you're on — a genuinely different destination/purpose (the GitHub
+     repo, the changelog page), not just another section of the same page —
+     e.g. <a class="link link--external" href="https://…">Label<svg
+     class="link-external-icon" aria-hidden="true"><use
+     href="#icon-external"/></svg></a>. Same-tab internal cross-document
+     links (Changelog, from index.html) get the icon too, just without
+     target="_blank"/rel="noopener" — those two only belong on links that
+     actually leave the site. The active-link-on-scroll JS already only
+     queries a.link[href^="#"], so anything using this modifier is
+     automatically excluded from that logic without any extra wiring — this
+     just adds the visual "you're leaving this page" signal an href alone
+     doesn't give the reader. */
+  .nav a.link.link--external { display: inline-flex; align-items: center; gap: 3px; }
+  /* Real SVG instead of the Unicode "↗" character, whose weight/angle/
+     proportions vary by whatever font renders it. */
+  .link-external-icon {
+    width: 0.85em; height: 0.85em; flex: none;
+    fill: none; stroke: var(--accent); stroke-width: 2.2;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke var(--duration-micro) var(--ease-out-expo);
+  }
+  /* Clear hue shift (not just a lightness/darkness tweak) — green to the
+     palette's other brand accent, so it's unambiguous that something
+     changed rather than a subtle wash that can lose contrast against
+     itself (the earlier green-on-green chip background did exactly that). */
+  .nav a.link.link--external:hover .link-external-icon { stroke: var(--accent-2); }
+  /* Low-opacity wash (not a solid fill) so it stays a soft backdrop rather
+     than competing with the icon's own color change — low enough percentage
+     that it ties to the hover color without recreating the same-hue
+     contrast collision a stronger tint would risk. */
+  .nav a.link.link--external:hover {
+    background: color-mix(in srgb, var(--accent-2) 10%, transparent);
+  }
+
+  /* Groups "different destination" links (Changelog, GitHub) at the end of
+     #nav-links, set apart from the section-anchor links above them — inside
+     the same collapsible container (not a separate .wrap-level sibling like
+     before) so they participate in the mobile hamburger menu instead of
+     being permanently pinned outside it. Desktop: a vertical divider reads
+     as "these are a different kind of link" without a full line break;
+     mobile inherits the divider from .nav .links a.link's own border-top
+     row styling below, so a horizontal rule does the same job once stacked. */
+  .nav .links-external {
+    display: flex; align-items: center; gap: 1.125rem;
+    padding-left: 1.125rem; margin-left: 0.125rem;
+    border-left: 1px solid var(--border);
+  }
+  /* In the hamburger only: the full row has no room for them. */
+  .nav .links a.link--menu-only { display: none; }
+  .nav.is-compact .links a.link--menu-only { display: inline-flex; }
+  /* .links-external-toolbar (index.html): the standalone duplicate of the
+     block above, shown in the toolbar itself instead of inside #nav-links
+     — see the HTML comment next to it for why it exists. A fully separate
+     class, deliberately NOT also carrying .links-external: it briefly did,
+     and picked up .nav.is-compact .links-external's flex-direction:column
+     (below, meant for the dropdown-stacked version) at higher specificity
+     than this block's own row layout — displayed, but stacked vertically
+     regardless. white-space:nowrap is an independent second safety net —
+     checkNavOverflow (assets/locale.js) only measures horizontal overflow,
+     so if this were ever allowed to wrap across two lines instead of
+     overflowing sideways, the measurement would never notice it doesn't
+     actually fit. */
+  .links-external-toolbar {
+    display: none; align-items: center; gap: 1.125rem; white-space: nowrap;
+  }
+  .links-external-toolbar a { white-space: nowrap; }
+  .nav.is-compact .links-external-toolbar { display: flex; }
+  /* Falls back to hamburger-only (hidden here too) once even the toolbar
+     copy doesn't fit — search-compact is the last resort, only reached
+     once locale.js's checkNavOverflow has already found that stage 2
+     (links collapsed, this copy shown) still overflows. */
+  .nav.search-compact .links-external-toolbar { display: none; }
+
+  /* Desktop only: brand pinned left, link list (including the external
+     group at its end) centered in whatever room is left between it and the
+     search icon — rather than clustered immediately after the brand.
+     Mobile keeps the existing hamburger-dropdown layout untouched. */
+  @media (min-width: 1101px) {
+    .nav .links { flex: none; margin: 0 auto; }
+    .nav .spacer { display: none; }
+  }
+
+  /* ---------- Hamburger menu (mobile) ---------- */
+  .nav-toggle {
+    display: none; flex: none;
+    width: 2.125rem; height: 2.125rem; padding: 0;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 0.1875rem;
+    /* Transparent (not absent) border reserved at rest — box-sizing:
+       border-box (global) means this costs zero size difference, so a
+       real border-color appearing on hover doesn't shift anything. */
+    border: 1px solid transparent; border-radius: 0.5rem;
+    background: none; cursor: pointer;
+    transition: background-color var(--duration-micro) var(--ease-out-expo), border-color var(--duration-micro) var(--ease-out-expo), gap var(--duration-fast) var(--ease-out-expo);
+  }
+  /* No border/background until hover — plain icon by default. Neutral-
+     family fills (--border, --bg-inset) didn't read as enough contrast
+     against a solid rest-state background — a tinted fill (real hue, not
+     just a lightness step) is more noticeable while staying softer than a
+     solid --accent fill. Bars also spread apart slightly (gap increases;
+     harmless once "open" since the X-shape state positions them via
+     transform, not gap). Default browser focus ring replaced since it
+     renders starkly white against this palette. */
+  .nav-toggle:hover {
+    background: color-mix(in srgb, var(--accent) 18%, var(--bg-subtle));
+    border-color: var(--border);
+    gap: 0.3125rem;
+  }
+  .nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .nav-toggle-bar {
+    width: 1rem; height: 2px; border-radius: 1px; background: var(--fg);
+    transition: transform var(--duration-quick) var(--ease-out-expo), opacity var(--duration-fast) var(--ease-out-expo);
+  }
+  /* translateY = bar-height + gap, so the top/bottom bars land exactly on
+     the (now-hidden) middle bar's center and cross cleanly into an X.
+     Recalculated after the rest-state gap changed (0.3125rem -> 0.1875rem,
+     a -0.125rem delta applied here too) — this value is geometrically
+     coupled to that gap, not an independent constant. */
+  .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(0.3125rem) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-0.3125rem) rotate(-45deg); }
+  /* Hover spreads the bars; open, that gap would pull the X apart. */
+  .nav-toggle[aria-expanded="true"]:hover { gap: 0.1875rem; }
+
+  /* This breakpoint is a no-JS fallback only — assets/locale.js's
+     checkNavOverflow does the real, JS-driven measurement (toggles
+     .nav.is-compact once the link row actually overflows, regardless of
+     viewport width or translated text length) and takes over above 700px.
+     Kept low so the two never fight: if this query fired anywhere the JS
+     check found no real overflow, .nav .links would be forced hidden with
+     nothing left to un-hide .spacer (that only happens via .is-compact). */
+  @media (max-width: 700px) {
+    .nav-toggle { display: inline-flex; width: 1.5rem; height: 1.5rem; gap: 0.15rem; }
+    .nav-toggle:hover { gap: 0.25rem; }
+    .nav-toggle-bar { width: 0.8125rem; }
+    /* Same recalculation as the desktop rule above, for this breakpoint's
+       own gap (0.25rem -> 0.15rem, a -0.1rem delta). */
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(0.24375rem) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-0.24375rem) rotate(-45deg); }
+    .nav-toggle[aria-expanded="true"]:hover { gap: 0.15rem; }
+    .nav .wrap { position: relative; flex-wrap: nowrap; padding: 0.25rem 0.875rem; gap: 0.5rem; }
+    .nav .brand { gap: 0.3125rem; }
+    .nav .brand .logo { font-size: 0.9375rem; }
+    .nav a.link { font-size: 0.8125rem; }
+    /* position:absolute so the open menu overlays the page instead of
+       pushing hero/section content down (a layout shift). It's anchored to
+       .nav .wrap (the nearest positioned ancestor) rather than .nav itself,
+       so it lines up under the bar's own padding instead of its full box. */
+    .nav .links {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 60;
+      flex-direction: column; align-items: stretch; gap: 0;
+      overflow: hidden;
+      max-height: 0;
+      background: var(--bg);
+      /* transparent, not var(--border), at rest — the border itself isn't
+         subject to max-height:0 (border is outside the content box it
+         constrains), so a real border color here rendered as a thin flat
+         line across the bottom of the nav bar even while "closed" and
+         zero height. Same fix as .nav's own border-bottom above: keep the
+         line, just make it invisible until there's something to divide. */
+      border: 1px solid transparent; border-top: none;
+      background-clip: padding-box;
+      border-radius: 0 0 var(--radius) var(--radius);
+      /* Closed: nothing painted over the nav's own border-bottom. */
+      visibility: hidden;
+      transition: max-height var(--duration-moderate) var(--ease-out-expo),
+                  border-color var(--duration-fast) var(--ease-out-expo),
+                  visibility 0s linear var(--duration-moderate);
+    }
+    .nav .links.open { max-height: 70vh; overflow-y: auto; box-shadow: var(--shadow); border-color: var(--border); visibility: visible; transition-delay: 0s; }
+    /* Stripped during an active window resize (site.js) — max-height
+       depends on this same breakpoint, so a live resize drag crossing it
+       repeatedly would otherwise animate janky mid-drag instead of
+       snapping cleanly between states. */
+    .nav .links.resizing { transition: none; }
+    .nav .links a.link {
+      /* Real row padding here — cancel the desktop pill's negative margin
+         trick so it doesn't pull these dropdown rows out of alignment. */
+      padding: 0.625rem 0.875rem; margin: 0; border-radius: 0;
+      border-top: 1px solid var(--border);
+    }
+    /* The very first row sits flush against .links' own top edge (which
+       borders the nav bar itself) — its border-top isn't dividing it from
+       anything above, it's just a stray extra line right under the nav.
+       Every other row's border-top is a real divider from the row before
+       it and stays. */
+    .nav .links > a.link:first-child { border-top: none; }
+    /* Desktop's vertical divider (border-left) doesn't apply once stacked —
+       every row already gets its own border-top from the rule above,
+       including the first external link, so that alone reads as the
+       divider into this group with nothing extra needed here. */
+    .nav .links-external {
+      display: flex; flex-direction: column; align-items: stretch; gap: 0;
+      padding-left: 0; margin-left: 0; border-left: none;
+    }
+    .nav .links a.link--menu-only { display: inline-flex; }
+  }
+
+  /* Same compact layout as the media query above, applied via a class
+     instead of a viewport check — assets/locale.js's initNavOverflowGuard
+     adds .is-compact to .nav whenever .nav .wrap's content genuinely
+     doesn't fit, which a fixed max-width can't account for once nav link
+     text comes from translation: Spanish/Italian labels already run
+     longer than English ("Use cases" -> "Casos de uso"), and the ~22
+     languages that go through Google Translate can inject text of any
+     length at runtime. The @media block stays as the no-JS baseline (a
+     real phone-width visitor gets a working hamburger even with
+     JavaScript disabled); this is what actually keeps it correct once
+     translated content is involved. Kept as a literal duplicate rather
+     than merged with the media query above (plain CSS can't OR a media
+     feature with a class selector in one rule, and this project has no
+     build step to generate one from the other). */
+  /* Deliberately minimal — only what's needed to make .links fit as a
+     dropdown instead of a row (toggle button, its own icon-bar geometry,
+     restoring .spacer, repositioning .links itself). The brand-logo
+     shrink, link font-size shrink, and search-trigger label/kbd collapse
+     that the @media version above also does are true-narrow-viewport
+     cosmetics that have nothing to do with why .is-compact triggers here
+     (the links row not fitting) — bundling them in meant every one of
+     them would also shrink/hide the moment translated nav text got long
+     enough to overflow, even though none of them needed to. Search still
+     collapses to icon-only on its own, independently, via its own real
+     @media (max-width: 900px) below — untouched by this class. */
+  .nav.is-compact .nav-toggle { display: inline-flex; width: 1.5rem; height: 1.5rem; gap: 0.15rem; }
+  .nav.is-compact .nav-toggle:hover { gap: 0.25rem; }
+  .nav.is-compact .nav-toggle-bar { width: 0.8125rem; }
+  .nav.is-compact .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(0.24375rem) rotate(45deg); }
+  .nav.is-compact .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-0.24375rem) rotate(-45deg); }
+  .nav.is-compact .nav-toggle[aria-expanded="true"]:hover { gap: 0.15rem; }
+  .nav.is-compact .wrap { position: relative; }
+  /* Undoes the min-width:1101px rule above that hides .spacer: that rule
+     assumes .links (visible, inline) does the "push everything rightward"
+     job itself by self-centering — once .is-compact makes .links
+     position:absolute, it's out of flow and can't do that job any more, so
+     .spacer needs to come back to push search/switcher/hamburger off the
+     brand. */
+  .nav.is-compact .spacer { display: block; }
+  .nav.is-compact .links {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 60;
+    margin: 0;
+    flex-direction: column; align-items: stretch; gap: 0;
+    overflow: hidden;
+    max-height: 0;
+    background: var(--bg);
+    /* transparent at rest — border isn't constrained by max-height:0, so a
+       real color here renders as a thin flat line under the nav even while
+       "closed". */
+    border: 1px solid transparent; border-top: none;
+    background-clip: padding-box;
+    border-radius: 0 0 var(--radius) var(--radius);
+    /* Closed: nothing painted over the nav's own border-bottom. */
+    visibility: hidden;
+    transition: max-height var(--duration-moderate) var(--ease-out-expo),
+                border-color var(--duration-fast) var(--ease-out-expo),
+                visibility 0s linear var(--duration-moderate);
+  }
+  .nav.is-compact .links.open { max-height: 70vh; overflow-y: auto; box-shadow: var(--shadow); border-color: var(--border); visibility: visible; transition-delay: 0s; }
+  .nav.is-compact .links.resizing { transition: none; }
+  .nav.is-compact .links a.link {
+    padding: 0.625rem 0.875rem; margin: 0; border-radius: 0;
+    border-top: 1px solid var(--border);
+  }
+  /* First row's border-top is a stray line under the nav bar, not a real
+     divider between rows. */
+  .nav.is-compact .links > a.link:first-child { border-top: none; }
+  .nav.is-compact .links-external {
+    display: flex; flex-direction: column; align-items: stretch; gap: 0;
+    padding-left: 0; margin-left: 0; border-left: none;
+  }
+  /* search-trigger's own icon-only collapse (below) should follow suit too. */
+  .nav.is-compact .search-trigger-label,
+  .nav.is-compact .search-kbd { display: none; }
+
+  /* ---------- Search / jump to (command palette) ---------- */
+  .search-trigger {
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
+    height: 2rem; padding: 0 var(--space-10);
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg-subtle); color: var(--muted);
+    font-family: var(--sans); font-size: 0.8125rem; font-weight: 600;
+    cursor: pointer;
+    transition: color var(--duration-micro) var(--ease-out-expo), border-color var(--duration-micro) var(--ease-out-expo), background-color var(--duration-micro) var(--ease-out-expo);
+  }
+  .search-trigger:hover { color: var(--accent); border-color: var(--accent); background: var(--bg); }
+  .search-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .search-trigger-icon {
+    width: 14px; height: 14px; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .search-kbd {
+    flex: none; min-width: 18px; padding: 0 5px;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); color: var(--muted);
+    font-family: var(--mono); font-size: 0.6875rem; line-height: 16px; text-align: center;
+  }
+  /* Collapses to icon-only only as a LAST resort, after the nav links have
+     already collapsed to a hamburger and the row still doesn't fit — driven
+     by assets/locale.js's checkNavOverflow, which measures in stages
+     (full desktop -> links collapsed -> also collapse search) rather than
+     guessing a fixed viewport width. .search-compact is added to .nav, same
+     as .is-compact; the @media version below is only a no-JS baseline. */
+  .nav.search-compact .search-trigger-label,
+  .nav.search-compact .search-kbd { display: none; }
+  .nav.search-compact .search-trigger { width: 2rem; padding: 0; justify-content: center; }
+  @media (max-width: 700px) {
+    .search-trigger-label, .search-kbd { display: none; }
+    .search-trigger { width: 2rem; padding: 0; justify-content: center; }
+  }
+
+  /* Native <dialog>: showModal() gives Escape-to-close and focus trapping
+     for free, plus a real top-layer/::backdrop with none of .nav's stacking
+     context to fight. overflow:hidden safely clips the results list to the
+     dialog's own rounded corners since nothing here needs to escape those
+     bounds (no nested popovers inside it). */
+  .search-modal {
+    width: min(480px, 92vw); margin: auto; padding: 0; overflow: hidden;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg); color: var(--fg);
+    box-shadow: var(--shadow);
+    opacity: 0; transform: scale(0.96);
+    transition: opacity var(--duration-micro) var(--ease-out-expo), transform var(--duration-micro) var(--ease-out-expo), overlay var(--duration-micro) var(--ease-out-expo) allow-discrete, display var(--duration-micro) var(--ease-out-expo) allow-discrete;
+  }
+  .search-modal[open] { opacity: 1; transform: scale(1); }
+  @starting-style {
+    .search-modal[open] { opacity: 0; transform: scale(0.96); }
+  }
+  .search-modal::backdrop {
+    background: rgba(10, 12, 6, 0.55);
+    opacity: 0;
+    transition: opacity var(--duration-micro) var(--ease-out-expo) allow-discrete;
+  }
+  .search-modal[open]::backdrop { opacity: 1; }
+  @starting-style {
+    .search-modal[open]::backdrop { opacity: 0; }
+  }
+
+  .search-input-wrap {
+    display: flex; align-items: center; gap: var(--space-10);
+    padding: var(--space-14) var(--space-16);
+    border-bottom: 1px solid var(--border);
+  }
+  .search-input-wrap svg {
+    width: 16px; height: 16px; flex: none;
+    fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  #search-input {
+    flex: 1 1 auto; min-width: 0; border: 0; background: transparent;
+    color: var(--fg); font-family: var(--sans); font-size: 1rem;
+  }
+  #search-input:focus { outline: none; }
+  #search-input::placeholder { color: var(--muted); }
+
+  .search-results {
+    list-style: none; margin: 0; padding: var(--space-8);
+    max-height: 320px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: var(--tree) transparent;
+  }
+  /* No query yet: the input row alone is the whole dialog, no empty gap below it. */
+  .search-results:empty { display: none; padding: 0; }
+  .search-results li a {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-10);
+    padding: var(--space-10); border-radius: 6px;
+    color: var(--fg); text-decoration: none; font-size: 0.875rem;
+  }
+  .search-results li a:hover,
+  .search-results li a.is-active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .search-match { background: transparent; color: var(--accent); font-weight: 700; }
+  /* Only present on a cross-page result (site.js's initSearch) — which page
+     a result lives on, once there's more than one page to search. */
+  .search-result-page { flex: none; font-size: 0.75rem; color: var(--muted); }
+  .search-empty, .search-hint {
+    padding: var(--space-22) var(--space-16); text-align: center;
+    color: var(--muted); font-size: 0.875rem;
+  }
+
+  /* ---------- Back to top (fixed, bottom-right) ---------- */
+  /* Below .nav's z-index:50 (never competes with it — bottom-right vs.
+     top bar) but above .shell/footer so it floats over both. Hidden via
+     visibility+pointer-events (not display) so it can fade in/out with a
+     real transition instead of an abrupt display:none snap. */
+  .back-to-top {
+    position: fixed; right: var(--space-20); bottom: var(--space-20); z-index: 40;
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; padding: 0;
+    border: 1px solid var(--border); border-radius: 50%;
+    background: var(--bg-subtle); color: var(--fg);
+    box-shadow: var(--shadow); cursor: pointer;
+    opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(8px);
+    transition: opacity var(--duration-fast) var(--ease-out-expo), transform var(--duration-fast) var(--ease-out-expo), border-color var(--duration-micro) var(--ease-out-expo), border-width var(--duration-micro) var(--ease-out-expo), color var(--duration-micro) var(--ease-out-expo);
+  }
+  .back-to-top.is-visible {
+    opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0);
+  }
+  /* box-sizing:border-box (global) means the extra border-width eats into
+     the content box instead of growing the 44px circle — no layout shift,
+     just a visually bolder ring. Paired with the icon's own stroke-width
+     bump below so hover reads as one consistent "thicker" state. */
+  .back-to-top:hover { border-color: var(--accent); border-width: 2px; color: var(--accent); transform: translateY(-2px); }
+  .back-to-top:active { transform: scale(0.92); }
+  .back-to-top:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* fill/stroke go on the <svg> itself, not a "svg path" descendant
+     selector — the actual <path> lives inside <use>'s shadow tree, which
+     descendant combinators can't reach; inherited properties do cross
+     that boundary, which is why this has to be set here (same reasoning
+     as .link-external-icon and .search-trigger-icon above). Getting this
+     wrong silently falls back to SVG's default black fill with no
+     stroke — exactly the "solid black icon, bad contrast" bug this once was. */
+  .back-to-top svg {
+    width: 18px; height: 18px; overflow: visible;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke-width var(--duration-micro) var(--ease-out-expo);
+  }
+  .back-to-top:hover svg { stroke-width: 2.75; }
+
+  /* ---------- Hero ---------- */
+  header.hero {
+    padding: var(--space-fluid-hero-top) 0 44px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-inner { display: flex; align-items: center; justify-content: center; gap: 56px; flex-wrap: wrap; }
+  .hero-text { flex: 1 1 380px; max-width: 560px; min-width: 0; }
+  .logo { font-size: 4.125rem; line-height: 1; }
+  /* Sized in em (#icon-crucible's viewBox is cropped to the artwork,
+     346:374 ≈ 1:1.08) so it scales with whichever .logo font-size context
+     it's in (nav desktop/mobile, hero) without per-breakpoint width/height.
+     No fill here: the mark carries its own two fills inside the symbol,
+     ember and flame, and a logo does not recolour with the text around it. */
+  .logo-mark { width: 0.925em; height: 1em; display: inline-block; vertical-align: -0.16em; }
+  .logo-mark--sm { width: 1.1em; height: 1.19em; vertical-align: -0.24em; }
+  /* Two-point fluid scale: same min/max as before, but anchored at explicit
+     breakpoints (400px small-phone -> 1280px desktop, matching the nav's own
+     max-width) instead of wherever a bare Xvw slope happened to land. Formula:
+     clamp(Fmin, (Fmin - slope*Wmin)/16 *1rem + slope*100 *1vw, Fmax), where
+     slope = (Fmax-Fmin)/(Wmax-Wmin) in px/px. */
+  h1 { font-size: clamp(2rem, 1.55rem + 1.82vw, 3rem); margin: var(--space-12) 0 var(--space-6); letter-spacing: -0.02em; }
+  .tagline { font-size: clamp(1rem, 0.886rem + 0.455vw, 1.25rem); color: var(--muted); max-width: 620px; margin: 0 auto var(--space-22); }
+  .badges { display: flex; flex-wrap: wrap; gap: var(--space-8); justify-content: center; margin-bottom: 26px; }
+  .badge {
+    font-size: 0.75rem; font-family: var(--mono);
+    padding: var(--space-4) var(--space-10); border-radius: 6px;
+    border: 1px solid var(--border); background: var(--bg-subtle); color: var(--muted);
+  }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--space-12); justify-content: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: var(--space-8);
+    padding: 11px var(--space-22); border-radius: 8px; font-weight: 600; font-size: 0.9375rem;
+    border: 1px solid var(--border);
+    transition: transform var(--duration-micro) var(--ease-out-expo), filter var(--duration-micro) var(--ease-out-expo), border-color var(--duration-micro) var(--ease-out-expo);
+  }
+  .btn.btn--primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+  .btn.btn--primary:hover { text-decoration: none; filter: brightness(1.08); }
+  .btn.btn--ghost { background: var(--bg-subtle); color: var(--fg); }
+  .btn.btn--ghost:hover { text-decoration: none; border-color: var(--accent); }
+
+  /* Small screens: one full-width button per row (three inline btns felt
+     cramped) and drop the tree visual so hero-text centers on its own
+     instead of sharing the row with a second flex item. */
+  @media (max-width: 640px) {
+    .cta { flex-direction: column; align-items: stretch; }
+    /* .btn is inline-flex with no justify-content — fine when its box
+       exactly fits its content, but align-items:stretch above now makes it
+       full-width, so the label/icon would sit left-aligned instead of
+       centered in that wider box without this. */
+    .cta .btn { justify-content: center; }
+    .hero-visual { display: none; }
+  }
+
+  /* ---------- Hero tree visual ---------- */
+  /* Same 400px->1280px two-point anchoring as h1/.tagline/h2, kept in px
+     since this is a layout width, not a type size. */
+  .hero-visual { flex: none; width: clamp(140px, 103.6px + 9.09vw, 220px); }
+  /* The mark is the hero visual here, so the small copy above the h1
+     would repeat it beside itself. It comes back on phones, where the
+     visual is dropped (the max-width: 640px block above). */
+  .hero-text .logo { display: none; }
+  @media (max-width: 640px) {
+    .hero-text .logo { display: block; }
+  }
+  /* The mark fades in as one unit — the same entrance treegen2's tree
+     diagram had. It carries its own fills, like .logo-mark. */
+  .hero-mark {
+    display: block; width: 100%; height: auto; overflow: visible;
+    opacity: 0;
+    /* Not --ease-out-expo here on purpose — its aggressive deceleration
+       front-loads nearly all the visible opacity change into the first
+       fraction of the duration (great for snappy hover feedback, wrong
+       for a slow deliberate reveal), so at 2.2s it visually "finished"
+       within half a second while the rest was an imperceptible 95%->100%
+       creep. ease-in-out spreads the perceived motion across the whole
+       declared duration instead. */
+    animation: hero-fade-in var(--duration-hero) var(--ease-in-out) forwards;
+  }
+  /* Starts right as the fade-in finishes instead of the old fixed 1.9s
+     delay, which was timed for a much longer entrance sequence that no
+     longer exists. */
+  .hero-visual { animation: hero-sway 6s ease-in-out var(--duration-hero) infinite; }
+  @keyframes hero-fade-in { to { opacity: 1; } }
+  @keyframes hero-sway { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+  /* ---------- Sections ---------- */
+  /* Alternating full-bleed band instead of a hard border-bottom line —
+     the color shift itself reads as the seam between sections. */
+  /* .nav is position:sticky — without this, jumping to a #section (nav
+     links) or Tab-focusing something near a section's top edge scrolls it
+     flush to the viewport top, right underneath the sticky bar, so it (or
+     its focus ring) ends up visually hidden. Generous flat value rather
+     than per-breakpoint nav height since a little extra clearance is harmless. */
+  section { padding: var(--space-fluid-section) 0; scroll-margin-top: 80px; }
+  section:nth-of-type(even) { background: var(--band); }
+  h2 { font-size: clamp(1.4rem, 1.173rem + 0.909vw, 1.9rem); margin: 0 0 var(--space-6); letter-spacing: -0.01em; }
+  .section-lead { color: var(--muted); margin: 0 auto 28px; max-width: 680px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent-2); font-weight: 700; margin-bottom: var(--space-8);
+  }
+
+  /* ---------- Comparison table, with the "Crucible" column highlighted ---------- */
+  /* min-width (not a bare fixed width) so on narrow screens the table keeps
+     readable column proportions and scrolls horizontally inside
+     .table-scroll, instead of table-layout:fixed squeezing the first
+     column's text down to near-nothing. */
+  .compare-table { table-layout: fixed; min-width: 480px; }
+  .compare-table th:first-child, .compare-table td:first-child { width: auto; }
+  /* Wide enough for the longest translated cell text (e.g. Spanish
+     "Manualmente"), not just the English original — real headroom rather
+     than a width tuned to the exact pixel of one language. */
+  .compare-table th:not(:first-child), .compare-table td:not(:first-child) { width: 150px; text-align: center; }
+  .compare-table .compare-no, .compare-table .compare-yes { font-weight: 700; font-size: 1rem; }
+  .compare-table .compare-no { color: var(--muted); }
+  .compare-table .compare-yes { color: var(--accent); }
+  /* Whole column reads as one lighter panel — plain background, no per-cell
+     borders (table cells can't round corners once border-collapse is set). */
+  .compare-table .col-highlight {
+    background: color-mix(in srgb, var(--accent) 20%, var(--bg-subtle));
+  }
+  .compare-table thead .col-highlight { color: var(--accent); }
+  /* In the dark theme 20% of ember over near-black is a maroon the ember
+     ticks nearly vanish into; half the tint keeps the column marked and
+     the ticks legible. */
+  @media (prefers-color-scheme: dark) {
+    .compare-table .col-highlight { background: color-mix(in srgb, var(--accent) 10%, var(--bg-subtle)); }
+  }
+  .col-head { display: flex; flex-direction: column; align-items: center; gap: var(--space-6); }
+  /* The asterisked Pest cells: a partial feature is not a ✓, and not a bare ✕ either. */
+  .compare-table sup { font-size: 0.6em; margin-left: 1px; color: var(--muted); }
+  .compare-note { color: var(--muted); font-size: 0.8125rem; margin: var(--space-12) auto 0; max-width: 680px; }
+
+  /* ---------- Live demo (typewriter → tree, JS state machine) ---------- */
+  .demo-card {
+    position: relative; text-align: left; overflow: hidden;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-inset); box-shadow: var(--shadow);
+  }
+  /* SVG border-draw: outline traces itself in on hover (pathLength trick). */
+  .border-draw { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .border-draw-rect {
+    x: 1px; y: 1px; width: calc(100% - 2px); height: calc(100% - 2px);
+    fill: none; stroke: var(--accent); stroke-width: 2;
+    stroke-dasharray: 1; stroke-dashoffset: 1;
+    transition: stroke-dashoffset var(--duration-panel) var(--ease-out-expo);
+  }
+  .demo-card:hover .border-draw-rect,
+  .demo-card.is-hovered .border-draw-rect,
+  .demo-card:focus-within .border-draw-rect { stroke-dashoffset: 0; }
+
+  .demo-chrome {
+    display: flex; align-items: center; gap: var(--space-8); padding: var(--space-10) var(--space-14);
+    border-bottom: 1px solid var(--border); background: var(--bg-subtle);
+  }
+  .demo-chrome .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .demo-chrome .dot.r { background: #d98b7a; }
+  .demo-chrome .dot.y { background: #d9b96f; }
+  .demo-chrome .dot.g { background: #8fc79a; }
+  .demo-filename { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); margin-left: 4px; }
+  .replay-btn {
+    margin-left: auto; font-family: var(--mono); font-size: 0.6875rem;
+    padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--muted); cursor: pointer;
+    transition: color var(--duration-micro) var(--ease-out-expo), border-color var(--duration-micro) var(--ease-out-expo), transform var(--duration-instant) var(--ease-out-expo);
+  }
+  .replay-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .replay-btn:active { transform: scale(.93); }
+  /* Same overflow:hidden-clips-the-ring issue as .accordion-trigger — .demo-card clips to its rounded corners. */
+  .replay-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+
+  .demo-body { padding: var(--space-20); }
+  .demo-pre { margin: 0; background: transparent; border: none; padding: 0; font-size: 0.8125rem; color: var(--fg); }
+  #demo-marker { color: var(--accent); font-weight: 700; }
+  .demo-cursor {
+    display: inline-block; width: 7px; height: 1em; background: var(--accent);
+    vertical-align: text-bottom; margin-left: 1px; animation: caret-blink 1s step-end infinite;
+  }
+  @keyframes caret-blink { 50% { opacity: 0; } }
+
+  .demo-tree { font-family: var(--mono); font-size: 0.8125rem; line-height: 1.75; margin-top: 12px; }
+  .demo-tree .line {
+    display: block; white-space: pre; opacity: 0; transform: translateX(-8px);
+    transition: opacity var(--duration-base) var(--ease-out-expo), transform var(--duration-base) var(--ease-out-expo);
+  }
+  .demo-tree .line.show { opacity: 1; transform: translateX(0); }
+  .demo-tree .ft-branch { color: var(--tree); }
+  .demo-tree .ft-dir { color: var(--accent); font-weight: 600; }
+  .demo-tree .ft-comment { color: var(--muted); }
+  /* A terminal frame, not a tree: the box-drawing rows must touch, so the
+     line height is the one assets/run.svg was captured at (17px rows of
+     13px text), and a frame 80 columns wide scrolls rather than wraps. */
+  .demo-body--screen { overflow-x: auto; }
+  .demo-tree.demo-screen { line-height: 1.31; width: max-content; }
+  .demo-screen-static { margin: 0; background: transparent; border: none; padding: 0; font-size: 0.8125rem; line-height: 1.31; color: var(--fg); }
+  .demo-card + .demo-card { margin-top: var(--space-22); }
+
+  /* ---------- Feature icons: hand-drawn SVG that stroke-draws itself ---------- */
+  .ic-svg { width: 26px; height: 26px; flex: none; display: block; }
+  .ic-svg path, .ic-svg circle, .ic-svg rect {
+    fill: none; stroke: var(--accent); stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1;
+  }
+  .js .reveal.in-view .ic-svg path,
+  .js .reveal.in-view .ic-svg circle,
+  .js .reveal.in-view .ic-svg rect { stroke-dashoffset: 0; transition: stroke-dashoffset var(--duration-slower) var(--ease-out-expo); }
+  .ic-svg :nth-child(2) { transition-delay: .15s; animation-delay: .15s; }
+  .ic-svg :nth-child(3) { transition-delay: .3s; animation-delay: .3s; }
+  /* .redraw is toggled by JS (remove+reflow+add) to replay the draw-in on every hover. */
+  .ic-svg.redraw path, .ic-svg.redraw circle, .ic-svg.redraw rect {
+    animation: icon-draw-replay var(--duration-slower) ease forwards;
+  }
+  @keyframes icon-draw-replay { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+  /* ---------- Variant cards ---------- */
+  .variant {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-subtle); overflow: hidden; margin-bottom: 22px;
+    box-shadow: var(--shadow); text-align: left;
+    transition: transform var(--duration-fast) var(--ease-out-expo), box-shadow var(--duration-fast) var(--ease-out-expo);
+  }
+  .variant:hover { transform: translateY(-3px); }
+  .variant > .head {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-12);
+    padding: var(--space-14) var(--space-18); border-bottom: 1px solid var(--border); background: var(--bg);
+  }
+  .variant .name { font-family: var(--mono); font-weight: 700; }
+  .variant .desc { color: var(--muted); font-size: 0.875rem; }
+  /* Centre whichever tree the action injects, keeping its own text left-aligned. */
+  .variant .body { padding: var(--space-20) var(--space-18); overflow-x: auto; }
+
+  pre, code { font-family: var(--mono); }
+  pre {
+    margin: 0; padding: var(--space-16); border-radius: 8px;
+    background: var(--bg-inset); border: 1px solid var(--border);
+    overflow-x: auto; font-size: 0.8125rem; line-height: 1.5; text-align: left;
+  }
+  /* Themed horizontal scrollbar for source/tree overflow — thin, on-palette,
+     kept visible (unlike .nav .links / .carousel, which hide theirs on
+     purpose for drag-to-scroll UX) since these blocks need the "there's
+     more" affordance a fully hidden scrollbar would remove. */
+  .table-scroll, .variant .body, pre {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tree) transparent;
+  }
+  .table-scroll::-webkit-scrollbar, .variant .body::-webkit-scrollbar, pre::-webkit-scrollbar {
+    height: 8px; width: 8px;
+  }
+  .table-scroll::-webkit-scrollbar-track, .variant .body::-webkit-scrollbar-track, pre::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .table-scroll::-webkit-scrollbar-thumb, .variant .body::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb {
+    background-color: var(--tree);
+    border-radius: 999px;
+    /* Transparent (not color-matched) border + padding-box clip: gives the
+       thumb breathing room from the track edges without needing to match
+       each container's different background (--bg-inset/--bg-subtle/--bg). */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .table-scroll::-webkit-scrollbar-thumb:hover, .variant .body::-webkit-scrollbar-thumb:hover, pre::-webkit-scrollbar-thumb:hover {
+    background-color: var(--accent);
+  }
+
+  code.inline {
+    font-size: 0.75em; padding: 3px 7px; border-radius: 6px;
+    line-height: 1.4; vertical-align: middle;
+    background: color-mix(in srgb, var(--accent) 2%, var(--bg-inset));
+    border: 1px solid color-mix(in srgb, var(--fg) 10%, color-mix(in srgb, var(--accent) 2%, var(--bg-inset)));
+    color: var(--gold);
+  }
+
+  /* Copy-to-clipboard button, injected by site.js around real code <pre> blocks */
+  .pre-wrap { position: relative; }
+  .pre-wrap pre { padding-right: 64px; }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 0.6875rem;
+    padding: var(--space-4) 9px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg-subtle); color: var(--muted); cursor: pointer; opacity: 0;
+    transition: opacity var(--duration-micro) var(--ease-out-expo), color var(--duration-micro) var(--ease-out-expo), border-color var(--duration-micro) var(--ease-out-expo);
+  }
+  .pre-wrap:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+  /* Earthy/muted instead of the browser-default bright ring, matching the
+     button's own resting palette (--muted/--border) rather than the
+     brighter --accent used elsewhere — less jarring against a code block. */
+  .copy-btn:focus-visible { outline: 2px solid var(--muted); outline-offset: 2px; }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .copy-btn.copied { color: var(--accent); border-color: var(--accent); opacity: 1; }
+
+  /* Injected: ASCII (styled <pre class="filetree-ascii">) */
+  /* This is a real <pre>, so it also picks up the generic pre{} rule's
+     background/border/padding — width:fit-content used to shrink that
+     whole box (background included) down to hug just the text, leaving a
+     narrower dark box floating inside the wider .variant card instead of
+     filling it. width:100% lets the background match the card; text stays
+     left-aligned inside it (already set) rather than each line centering
+     independently. */
+  .filetree-ascii {
+    display: block; width: 100%; text-align: left; line-height: 1.55;
+  }
+  .filetree-ascii .ft-branch { color: var(--tree); }        /* │ ├ └ ── */
+  .filetree-ascii .ft-dir { color: var(--accent); font-weight: 600; }
+  .filetree-ascii .ft-file { color: var(--fg); }
+  .filetree-ascii .ft-slash { color: var(--tree); }         /* trailing / */
+  .filetree-ascii .ft-comment { color: var(--muted); }      /* # description */
+
+  /* Injected: SVG image */
+  img.filetree-svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+
+  /* Injected: collapsible <details> tree */
+  .tree-details { display: block; width: fit-content; max-width: 100%; margin: 0 auto; text-align: left; font-family: var(--mono); font-size: 0.875rem; }
+  .tree-details details { margin: var(--space-2) 0; }
+  /* Rows are flex so the notes can align into a single right-hand column. */
+  .tree-details summary, .tree-details li {
+    display: flex; align-items: baseline; gap: var(--space-6);
+    padding: 3px var(--space-6); border-radius: 6px; list-style: none;
+  }
+  .tree-details summary { cursor: pointer; }
+  /* .variant clips to its rounded corners via overflow:hidden — same inset-ring fix as .accordion-trigger. */
+  .tree-details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+  .tree-details summary::-webkit-details-marker { display: none; }
+  .tree-details summary::before { content: "▸"; color: var(--tree); font-size: 0.6875rem; flex: none; transition: transform var(--duration-fast) var(--ease-out-expo); }
+  .tree-details details[open] > summary::before { content: "▾"; }
+  .tree-details summary:hover,
+  .tree-details li:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .tree-details summary:hover .ft-name,
+  .tree-details li:hover .ft-name { animation: icon-bounce var(--duration-relaxed) ease; }
+  @keyframes icon-bounce {
+    0% { transform: translateY(0) rotate(0); }
+    35% { transform: translateY(-3px) rotate(-4deg); }
+    100% { transform: translateY(0) rotate(0); }
+  }
+  .tree-details details > details,
+  .tree-details details > ul { margin-left: var(--space-18); border-left: 1px solid var(--border); padding-left: var(--space-12); }
+  .tree-details ul { list-style: none; margin: var(--space-2) 0; padding-left: var(--space-12); }
+  .tree-details li { color: var(--fg); }
+  /* Name sits in a min-width column; the note is left-aligned after it and
+     truncates with an ellipsis instead of wrapping. */
+  .tree-details .ft-name { flex: none; min-width: 190px; white-space: nowrap; display: inline-block; }
+  .tree-details .ft-note {
+    flex: 1 1 auto; min-width: 0;
+    color: var(--muted); font-style: italic;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tree-details strong { color: var(--accent); }
+
+  /* ---------- How it works ---------- */
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-16); text-align: left; }
+  .step { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-20); background: var(--bg-subtle); transition: transform var(--duration-fast) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-out-expo); }
+  .step:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .step-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 8px; font-weight: 700; font-family: var(--mono);
+    background: var(--accent); color: var(--on-accent); margin-bottom: var(--space-10);
+    transition: transform var(--duration-moderate) cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .step:hover .step-number { transform: scale(1.12) rotate(-4deg); }
+  .step h3 { margin: 0 0 4px; font-size: 1rem; }
+  .step p { margin: 0; color: var(--muted); font-size: 0.875rem; }
+
+  /* ---------- Features ---------- */
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-16); text-align: left; }
+  .feature { display: flex; gap: var(--space-14); align-items: flex-start; }
+  .feature > div { min-width: 0; }
+  .feature h3 { margin: var(--space-4) 0 var(--space-2); font-size: 0.98rem; }
+  .feature p { margin: 0; color: var(--muted); font-size: 0.875rem; }
+
+  /* ---------- Attributes table ---------- */
+  /* Padding lives on the outer .table-scroll, not the table itself, so the
+     zebra striping (nth-child background on tr, spans the full row width)
+     sits inset with breathing room instead of running flush into the
+     container's border/corners. */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-8); text-align: left; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+  th, td { text-align: left; padding: var(--space-10) var(--space-14); border-bottom: 1px solid var(--border); }
+  th { background: var(--bg-subtle); font-weight: 600; }
+  /* Very slight zebra striping. */
+  tbody tr:nth-child(even) { background: color-mix(in srgb, var(--fg) 2%, transparent); }
+  tr:last-child td { border-bottom: 0; }
+  td code, th code { font-family: var(--mono); font-size: 0.88em; }
+
+  footer { padding: 40px 0 60px; color: var(--muted); font-size: 0.875rem; }
+  /* Reveal footer (JS-enhanced only — plain static footer without JS):
+     the footer sits fixed behind .shell; .shell's bottom margin (kept in
+     sync with the footer's real height by ResizeObserver in site.js) opens
+     up exactly enough scroll room for it to peek out from underneath. */
+  .js footer.reveal-footer {
+    position: fixed; left: 0; bottom: 0; z-index: 0;
+    background: var(--bg-subtle); border-top: 1px solid var(--border);
+  }
+  .muted { color: var(--muted); }
+  .callout {
+    border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    background: var(--bg-subtle); border-radius: 8px; padding: var(--space-14) var(--space-16);
+    font-size: 0.875rem; margin-top: 20px; text-align: left;
+  }
+
+  /* On phones, drop the descriptions so the trees stay legible. */
+  /* Explicit single column at a generous breakpoint — not relying on
+     auto-fit/minmax math to collapse these on its own at some unclear
+     narrower width. */
+  @media (max-width: 780px) {
+    .steps, .features { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .filetree-ascii .ft-comment { display: none; }
+    .tree-details .ft-note { display: none; }
+    .tree-details .ft-name { min-width: 0; }
+    .variant .desc { display: none; }
+
+    /* Reference tables become stacked cards instead of a horizontally
+       scrolling grid — 3 columns squeezed into a phone width isn't
+       readable even when technically "responsive" via scroll. */
+    .table-scroll { overflow-x: visible; border: none; padding: 0; }
+    .options-table, .compare-table {
+      table-layout: auto; min-width: 0;
+      display: block; border: none;
+    }
+    .options-table thead, .compare-table thead { display: none; }
+    .options-table tbody, .compare-table tbody { display: block; }
+    .options-table tr, .compare-table tr {
+      display: block; margin-bottom: var(--space-12);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--bg-subtle); padding: var(--space-4) var(--space-14);
+    }
+    .options-table td, .compare-table td {
+      display: flex; align-items: baseline; gap: var(--space-10); flex-wrap: wrap;
+      width: auto !important; padding: var(--space-8) 0; border-bottom: 1px solid var(--border);
+    }
+    .options-table tr > td:last-child, .compare-table tr > td:last-child { border-bottom: none; }
+    .options-table td:first-child, .compare-table td:first-child {
+      font-weight: 700; color: var(--fg);
+    }
+    .options-table td[data-label]::before, .compare-table td[data-label]::before {
+      content: attr(data-label); flex: none; width: 5.5rem;
+      font-size: 0.6875rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .03em; color: var(--muted);
+    }
+    .compare-table .col-highlight { background: none; box-shadow: none; }
+    .compare-table td.col-highlight { color: var(--accent); font-weight: 700; }
+  }
+
+/* ---------- Use-case carousel (horizontal scroll-snap) ---------- */
+/* Breaks out of .wrap-wide's 1080px cap to use the full viewport — the
+   heading/lead above stay readable-width, but the card row gets real
+   screen real estate and a genuine edge-peek instead of being squeezed
+   into the same column as body copy. Gutter tracks .wrap-wide's own edge
+   up to 1080px, then holds at 20px to match .wrap's padding everywhere else. */
+.carousel-viewport {
+  position: relative; margin-top: 28px;
+  /* Subtract the classic-scrollbar gutter (measured in site.js, 0 if none —
+     e.g. mobile/overlay scrollbars) so the box's right edge lands on the
+     real visible edge instead of overshooting into clipped space. The
+     "50% - 50vw" centering trick assumes the parent is centered relative to
+     the SAME viewport value used in the formula — but .wrap-wide is
+     centered against the real (scrollbar-excluded) width while "50vw" here
+     is the spec value (scrollbar-included), so without this + correction
+     the whole box drifts scrollbar-width/2 too far left, taking its left
+     edge negative (clipped) while the right edge undershoots instead. */
+  width: calc(100vw - var(--scrollbar-w, 0px));
+  margin-left: calc(50% - 50vw + (var(--scrollbar-w, 0px) / 2));
+}
+.carousel, .carousel-btn {
+  /* Same sticky-nav clearance as section — the track itself is
+     tabindex="0", so Tab can scroll straight to it independent of the
+     section boundary above. */
+  scroll-margin-top: 80px;
+}
+.carousel {
+  display: flex; gap: var(--space-16);
+  overflow-x: auto; scroll-snap-type: x proximity;
+  /* Extra top/bottom padding (was 4px/16px) so the focus ring below has
+     real air between itself and the cards, not just the viewport edge. */
+  padding-block: var(--space-18) var(--space-22);
+  /* Flat-ish gutter (not tied to the 1080px breakpoint math) — anchoring it
+     to wrap-wide's own edge would grow the gutter in lockstep with the
+     viewport and leave the same ~1040px content width at any size,
+     cancelling out the whole point of breaking out of the max-width. */
+  padding-inline: clamp(20px, 4vw, 64px);
+  scroll-padding-inline: clamp(20px, 4vw, 64px);
+  scrollbar-width: none;
+  cursor: grab;
+  text-align: left;
+}
+.carousel.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+.carousel::-webkit-scrollbar { display: none; }
+/* Inset, not outward: .carousel now spans the full viewport (breakout
+   above), so a positive offset pushed the ring past the viewport edge
+   where overflow-x:clip on html/body cut it off. Inset keeps the track
+   itself edge-to-edge while the ring lives inside its own gutter padding.
+   Deeper offset (was -3px) so the ring doesn't sit flush against the
+   window's own start/end, and rounded to match the ring language used
+   everywhere else on the page (accordion/nav/etc). */
+.carousel:focus-visible { outline: 2px solid var(--accent); outline-offset: -8px; border-radius: var(--radius); }
+.carousel-card {
+  flex: 0 0 auto; width: min(260px, 78vw);
+  scroll-snap-align: start;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg-subtle); box-shadow: var(--shadow);
+  padding: var(--space-20); transition: transform var(--duration-fast) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-out-expo);
+}
+.carousel-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+.carousel-card .cc-eyebrow { font-weight: 700; margin-bottom: var(--space-8); color: var(--fg); }
+.carousel-card p { margin: 0; color: var(--muted); font-size: 0.875rem; }
+/* Hidden by default; site.js adds .has-overflow only once the track is
+   actually wider than its viewport (now that the carousel can span the
+   full screen, "all 6 cards already fit" is a real case on wide monitors,
+   and showing arrows that do nothing is worse than showing none). */
+.carousel-nav { display: none; gap: var(--space-10); justify-content: center; margin-top: var(--space-6); }
+.carousel-viewport.has-overflow .carousel-nav { display: flex; }
+.carousel-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--bg-subtle); color: var(--fg); cursor: pointer; padding: 0;
+  transition: border-color var(--duration-micro) var(--ease-out-expo), transform var(--duration-micro) var(--ease-out-expo), color var(--duration-micro) var(--ease-out-expo), opacity var(--duration-micro) var(--ease-out-expo);
+}
+.carousel-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+.carousel-btn:active { transform: scale(.92); }
+.carousel-btn:disabled {
+  opacity: 0.35; cursor: default; pointer-events: none;
+  border-color: var(--border); color: var(--fg); transform: none;
+}
+.carousel-btn svg {
+  width: 15px; height: 15px; overflow: visible;
+}
+.carousel-btn svg path {
+  fill: none; stroke: currentColor; stroke-width: 2.4;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ---------- Accordion (FAQ) — CSS grid-rows trick, no JS height math ---------- */
+.accordion { display: flex; flex-direction: column; gap: var(--space-10); text-align: left; }
+.accordion-item {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg-subtle); overflow: hidden;
+  /* Reserve the second ring as a transparent (zero-visual, zero-layout-impact)
+     outline at rest — border-width itself never changes, so there's no 1px
+     reflow/jank when toggling. outline sits just inside the real border and
+     only ever changes color. */
+  outline: 1px solid transparent; outline-offset: -1px;
+  transition: border-color var(--duration-fast) var(--ease-out-expo), outline-color var(--duration-fast) var(--ease-out-expo);
+}
+/* Keyboard focus and "open" both ring the whole card — not just the summary
+   row — but at different strengths so they stay distinguishable: a lighter
+   tint while merely focused, full accent once actually open. Focus-visible
+   rule sits first so when an item is both open AND focused (e.g. right
+   after activating it), the later same-specificity aria-expanded rule wins
+   the cascade and shows full strength. */
+.accordion-item:has(.accordion-trigger:focus-visible) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  outline-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+.accordion-item:has(.accordion-trigger[aria-expanded="true"]) {
+  border-color: var(--accent);
+  outline-color: var(--accent);
+}
+/* Open AND focused (e.g. tabbing onto the item you just opened) needs its
+   own signal, or focus moving onto an already-open item is invisible. A
+   "darker" accent would need separate light/dark tuning to stay readable —
+   a wider ring reads as "focus is here" regardless of theme. */
+.accordion-item:has(.accordion-trigger[aria-expanded="true"]):has(.accordion-trigger:focus-visible) {
+  outline-width: 2px;
+}
+.accordion-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-16);
+  padding: var(--space-16) var(--space-20); background: none; border: none; font: inherit; font-weight: 600;
+  color: var(--fg); text-align: left; cursor: pointer;
+}
+/* Flex items default to min-width:auto, which can force this text past the
+   edge of the row (and get invisibly clipped by overflow-x:clip on body)
+   instead of wrapping, on narrow screens with a long question. */
+.accordion-trigger > span:first-child { min-width: 0; }
+.accordion-trigger:hover { color: var(--accent); }
+/* No ring of its own — the parent .accordion-item (:has() above) carries
+   the whole-card focus/open indicator instead, so the summary row alone
+   never shows a border. */
+.accordion-trigger:focus-visible { outline: none; }
+.accordion-icon {
+  flex: none; font-family: var(--mono); font-size: 1.125rem; line-height: 1; color: var(--accent);
+  transition: transform var(--duration-moderate) var(--ease-out-expo);
+}
+.accordion-trigger[aria-expanded="true"] .accordion-icon { transform: rotate(45deg); }
+.accordion-panel-wrap {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-base) var(--ease-out-expo);
+}
+.accordion-trigger[aria-expanded="true"] + .accordion-panel-wrap { grid-template-rows: 1fr; }
+.accordion-panel-inner { overflow: hidden; }
+.accordion-panel { margin: 0; padding: 0 var(--space-20) var(--space-18); color: var(--muted); font-size: 0.875rem; }
+
+/* ---------- Pill badge (used in the highlighted comparison-table column) ---------- */
+.pill {
+  display: inline-block; font-family: var(--mono); font-weight: 700;
+  font-size: 0.625rem; letter-spacing: .03em; text-transform: uppercase;
+  color: var(--on-accent); background: var(--accent);
+  padding: var(--space-2) 7px; border-radius: 999px; vertical-align: middle;
+}
+
+/* ---------- Scroll-reveal (progressive enhancement, no-JS shows content) ---------- */
+.js .reveal {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity var(--duration-slow) var(--ease-out-expo), transform var(--duration-slow) var(--ease-out-expo);
+}
+.js .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal { opacity: 1; transform: none; transition: none; }
+  .hero-mark, .hero-visual { animation: none !important; }
+  .hero-mark { opacity: 1; }
+  .btn:hover, .variant:hover, .step:hover, .carousel-card:hover { transform: none; }
+  .accordion-panel-wrap { transition: none; }
+  .accordion-icon { transition: none; }
+  .ic-svg path, .ic-svg circle, .ic-svg rect { stroke-dashoffset: 0 !important; transition: none !important; animation: none !important; }
+  .demo-tree .line { opacity: 1; transform: none; transition: none; }
+  .demo-cursor { animation: none; }
+  .border-draw rect { transition: none; stroke-dashoffset: 0; }
+}
+
+/* ---------- Film-grain texture overlay ---------- */
+/* Tiny tiled feTurbulence noise, inlined as a data-URI so it stays a
+   zero-request, zero-dependency layer like the rest of the page. Blended
+   over everything (including the section bands above) so it reads as one
+   consistent paper-like texture rather than per-band noise. */
+body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  opacity: 0.035; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+@media (prefers-color-scheme: dark) {
+  body::after { opacity: 0.05; mix-blend-mode: overlay; }
+}
+
+/* ---------- Docs page: swatches (kept for reference pages) ---------- */
+.doc h2 { scroll-margin-top: 72px; }
+.doc h3 { font-size: 1.05rem; margin: 26px 0 8px; }
+.doc p, .doc li { color: var(--fg); }
+.doc .section-lead { color: var(--muted); }
+.doc ul { padding-left: var(--space-20); }
+.doc li { margin: var(--space-4) 0; }
+.doc section { text-align: left; }
+.doc section .wrap { text-align: left; }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-10); }
+.swatch {
+  display: flex; align-items: center; gap: var(--space-10);
+  border: 1px solid var(--border); border-radius: 8px; padding: var(--space-8) var(--space-12);
+  background: var(--bg-subtle); font-family: var(--mono); font-size: 0.8125rem;
+}
+.swatch .dot { width: 16px; height: 16px; border-radius: 4px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.swatch .tag { color: var(--muted); font-size: 0.6875rem; }
+
+/* Complement to .no-print — hidden on screen, shown only in @media print
+   below. Global (not nested in @media print) since the default/screen
+   state needs to hide it. */
+.print-only { display: none; }
+
+/* ---------- Print ---------- */
+/* Several on-screen tricks actively break on paper if left alone:
+   - .reveal starts at opacity:0 until scroll-triggered by JS; anything
+     never scrolled into view before printing would print blank.
+   - .nav is sticky and footer.reveal-footer is fixed — print has no
+     viewport to stick/fix to, and fixed elements can repeat per page.
+   - overflow-x:auto (table-scroll/pre/variant .body/carousel) hides
+     content behind a scrollbar that doesn't exist on paper.
+   - the accordion's answers are collapsed to 0 height until clicked.
+   - the color-scheme could still follow a dark OS preference, which
+     would print a full dark background — pure ink waste. */
+@media print {
+  * { animation: none !important; transition: none !important; }
+
+  /* Full black-and-white: every color token collapses to a grayscale value
+     (not just backgrounds) so links/icons/borders that read via --accent,
+     --accent-2 etc. print in ink-efficient gray/black instead of color. */
+  :root {
+    --bg: #ffffff; --bg-subtle: #ffffff; --bg-inset: #ffffff;
+    --border: #999999; --fg: #000000; --muted: #555555;
+    --accent: #000000; --accent-2: #333333; --tree: #777777;
+    /* Was white-on-filled-background (buttons, .pill, .step-number's circle)
+       — the blanket background removal below strips that fill, so white
+       text would otherwise land on white paper and vanish. */
+    --on-accent: #000000; --gold: #333333;
+    --shadow: none;
+  }
+  /* Blanket removal instead of chasing every component's fill individually
+     (buttons, badges, pills, zebra-striped rows and the highlighted table
+     column all use solid/color-mix() backgrounds that variable-remapping
+     alone wouldn't catch) — borders/typography carry the structure instead. */
+  * { background: none !important; background-image: none !important; box-shadow: none !important; }
+  body { color: #000; }
+  .shell { margin-bottom: 0 !important; }
+  body::after { display: none; } /* grain texture: pure decoration, wastes ink, fixed-position besides */
+
+  /* General grayscale for any image/SVG. Inline SVGs (hero tree, feature
+     icons) already go grayscale via the --accent/--tree variable remap
+     above since they're styled with var(), but the injected demo/variant
+     SVG (assets/example-tree-green.svg) is a separate file loaded via
+     <img> with its own hardcoded colors that this page's CSS variables
+     can't reach — a filter is the only way to catch that one too. */
+  img, svg { filter: grayscale(1); }
+
+  .skip-link, .nav, .nav-toggle, .carousel-nav, .replay-btn, .copy-btn,
+  .demo-cursor, .border-draw, .carousel-btn {
+    display: none !important;
+  }
+
+  /* Nothing scroll-triggered should stay hidden just because it was
+     never scrolled past on screen. */
+  .reveal, .js .reveal { opacity: 1 !important; transform: none !important; }
+
+  /* footer.reveal-footer: drop the fixed/hidden-until-scrolled trick and
+     let it print in normal flow like any other content. */
+  footer.reveal-footer { position: static !important; }
+
+  /* Force every FAQ answer open — a printed page can't click to expand one. */
+  .accordion-panel-wrap { grid-template-rows: 1fr !important; }
+  .accordion-icon { display: none; }
+
+  /* Scrollable-on-screen containers: let the content flow/wrap in print
+     instead of clipping behind a scrollbar that can't exist on paper. */
+  .table-scroll, .variant .body, pre, .carousel {
+    overflow: visible !important;
+  }
+  .carousel-viewport { width: auto !important; margin-left: 0 !important; }
+  .carousel { display: block !important; padding: 0 !important; }
+  .carousel-card { width: auto !important; margin-bottom: 10px; }
+
+  section { padding: 24px 0; border-bottom: 1px solid #ccc; }
+  .wrap, .wrap-wide { max-width: 100%; }
+
+  /* Keep cards/rows from splitting across a page break where reasonably
+     avoidable. */
+  .variant, .step, .feature, .accordion-item, .carousel-card, tr {
+    break-inside: avoid;
+  }
+
+  /* Meaningful gray survives the blanket background removal above — the
+     "recommended" column and zebra striping both carry real information
+     (which option to pick / which row you're reading), not decoration. */
+  .compare-table .col-highlight { background: #eaeaea !important; }
+  tbody tr:nth-child(even) { background: #f4f4f4 !important; }
+
+  /* Decorative "card" chrome (screen-only visual separation) — spacing and
+     typography carry the structure instead. Table cell borders (below)
+     and the callout's left accent bar are kept; both convey real structure. */
+  .variant, .step, .accordion-item, .carousel-card, .demo-card,
+  .badge, .table-scroll, code.inline, pre {
+    border: none !important;
+  }
+  /* .accordion-item also carries the open/focus ring as an *outline* (not
+     just border) — transparent at rest, but the first FAQ item is
+     statically aria-expanded="true" in the HTML, so its :has() rule still
+     colors that outline even with nothing focused in a print snapshot. */
+  .accordion-item { outline: none !important; }
+  .callout { border: none; border-left: 5px solid #777; border-radius: 0; padding-left: 12px; }
+
+  /* CTA buttons aren't clickable on paper, so a bordered/filled box implies
+     an affordance that isn't real — treat them as plain text links instead. */
+  .btn {
+    display: inline; background: none !important; border: none !important;
+    padding: 0; border-radius: 0; color: inherit; font-weight: 600;
+    text-decoration: underline;
+  }
+  /* Generic "hide in print" utility — a template reused across projects
+     needs a semantic hook here instead of a one-off selector tied to this
+     project's own content (e.g. a specific href). Apply it to whatever a
+     given project doesn't want on paper: this page uses it on "Watch it
+     run", which only exists to jump to a JS-animated demo with no
+     standalone value once there's no interactivity — "Quick start" and
+     "Star on GitHub" both point to genuinely useful printed content, so
+     they're left as plain links (the GitHub one already gets its URL
+     appended below) rather than marked .no-print. */
+  .no-print { display: none !important; }
+
+  /* Complement of .no-print, populated on beforeprint (site.js) with the
+     page title/URL/print date-time — a custom masthead instead of relying
+     on each browser's own inconsistent (and not-always-on) printed
+     header/footer chrome. */
+  .print-only {
+    display: block !important;
+    margin-bottom: 14px; padding-bottom: 8px;
+    border-bottom: 1px solid #999;
+    font-size: 8.5pt; color: #444;
+  }
+  #print-meta-title { display: block; font-size: 11pt; color: #000; }
+  #print-meta-url, #print-meta-date { display: block; }
+
+  /* Footer links, one per line: with each getting its full URL appended
+     below, the inline row wraps unpredictably on a narrower print page —
+     a deliberate full-width block per link reads cleaner than that
+     accidental wrap. (The " · " separators between them, still plain text
+     nodes in the markup, end up as short standalone lines — a minor
+     cosmetic quirk, not worth restructuring the footer's HTML to avoid.) */
+  /* .wrap centers text by default (screen convention) — left-align the
+     whole footer (both paragraphs, so the " · " separator text nodes
+     between links match rather than staying centered on their own) since
+     the link list reads as a list now, not a centered line of prose. */
+  footer .wrap p { text-align: left; }
+  footer .wrap p a { display: block; width: 100%; }
+  .table-scroll { border-radius: 0; }
+  table, th, td { border-color: #999 !important; }
+
+  /* Point sizes instead of the screen clamp()s (which resolve "vw" against
+     the print page's own dimensions — an arbitrary, untuned value with no
+     relation to the 400-1280px screen range they were designed for) and
+     instead of the root's 115% screen zoom. Trimmed down further for a
+     denser page rather than matching the screen's spacious scale. */
+  html { font-size: 9.5pt; }
+  body { font-size: 9.5pt; line-height: 1.35; }
+  h1 { font-size: 19pt; margin: 6px 0 4px; }
+  h2 { font-size: 14pt; margin: 0 0 4px; }
+  h3 { font-size: 12pt; }
+  .tagline { font-size: 11pt; }
+  .section-lead { font-size: 10pt; margin-bottom: 12px; }
+  .eyebrow { font-size: 7.5pt; margin-bottom: 4px; }
+  .badge { font-size: 7.5pt; padding: 2px 7px; }
+  code, pre, code.inline, .demo-tree, .tree-details { font-size: 8.5pt; }
+
+  /* Tighter padding/gaps than the screen's roomy card layout — paper is a
+     more limited canvas than a scrolling page. */
+  section { padding: 14px 0; }
+  .variant .body { padding: 10px 4px; }
+  .step, .demo-body { padding: 10px; }
+  .accordion-trigger { padding: 8px 4px; }
+  .accordion-panel { padding: 0 4px 10px; }
+  .accordion { gap: 6px; }
+  .steps, .features { gap: 10px; }
+  .cta, .badges { margin-bottom: 10px; }
+  header.hero { padding: 20px 0 14px; }
+
+  /* Printed docs conventionally surface a link's real destination next to
+     its text — skip mailto/in-page anchors, where the href isn't useful
+     information on paper. */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.75em; color: #444; word-break: break-all;
+  }
+}

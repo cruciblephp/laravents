@@ -1,0 +1,22 @@
+laravel: '@testbench'
+
+env:
+  - APP_KEY="base64:bGFyYXZlbnRzLXdvcmtiZW5jaC1rZXktMzItYnl0ZXM="
+  - DB_CONNECTION=sqlite
+  - QUEUE_CONNECTION=database
+
+# LaraventsServiceProvider is not listed: package discovery registers it from composer.json's extra.laravel.
+providers:
+  - Workbench\App\Providers\WorkbenchServiceProvider
+  - Modules\Band\BandServiceProvider
+  - Modules\Press\PressServiceProvider
+  - Modules\FanClub\FanClubServiceProvider
+
+migrations:
+  - workbench/database/migrations
+
+workbench:
+  start: '/'
+  install: false
+  discovers:
+    web: true

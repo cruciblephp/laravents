@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Laravents\Concerns\Sendable;
+
+/**
+ * Command {{ routingKey }}.
+ */
+final readonly class {{ class }}
+{
+    use Sendable;
+
+    public function __construct(
+        //
+    ) {}
+}

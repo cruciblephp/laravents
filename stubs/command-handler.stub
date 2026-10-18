@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Laravents\Attributes\CommandHandler;{{ imports }}
+use {{ namespacedMessage }};
+
+final class {{ class }}
+{
+    #[CommandHandler]{{ attributes }}
+    public function __invoke({{ message }} $command): void
+    {
+        //
+    }
+}

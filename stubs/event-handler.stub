@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Laravents\Attributes\EventHandler;{{ imports }}
+use {{ namespacedMessage }};
+
+final class {{ class }}
+{
+    #[EventHandler]{{ attributes }}
+    public function __invoke({{ message }} $event): void
+    {
+        //
+    }
+}
