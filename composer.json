@@ -22,8 +22,7 @@
     },
     "require": {
         "php": "^8.3",
-        "laravel/framework": "^13.0",
-        "spatie/php-structure-discoverer": "^2.4"
+        "laravel/framework": "^13.0"
     },
     "require-dev": {
         "cruciblephp/crucible": "^1.1.5",

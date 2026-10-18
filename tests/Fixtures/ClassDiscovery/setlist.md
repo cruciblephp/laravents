@@ -1,0 +1,1 @@
+Not PHP: never read.

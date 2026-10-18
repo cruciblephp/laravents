@@ -2,6 +2,10 @@
 
 Every release, as it ships.
 
+## v1.0.1 - 2026-10-18
+
+- Removed the `spatie/php-structure-discoverer` dependency, and `spatie/laravel-package-tools` with it: the classes in `laravents.paths` are found with Laravel's Symfony Finder and PHP's tokenizer, in the same order, so `laravel/framework` is the only requirement
+
 ## v1.0.0 - 2026-10-18
 
 - Added commands, queries and events as plain objects with the `Sendable`, `Askable` and `Publishable` traits: `GiveNickname::send(...)`, `GetNickname::ask(...)`, `NicknameGiven::publish(...)`

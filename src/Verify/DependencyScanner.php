@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Laravents\Verify;
 
 use Closure;
+use Laravents\Discovery\ClassDiscovery;
 use PhpToken;
 use ReflectionClass;
 use Throwable;
@@ -114,10 +115,7 @@ final class DependencyScanner
      */
     public function referencesIn(string $code, string $prefix = ''): array
     {
-        $this->tokens = array_values(array_filter(
-            PhpToken::tokenize($code),
-            static fn (PhpToken $token): bool => ! $token->isIgnorable(),
-        ));
+        $this->tokens = ClassDiscovery::tokens($code);
         $this->prefix = $prefix;
         $this->namespace = '';
         $this->aliases = [];
