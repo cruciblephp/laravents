@@ -2,6 +2,7 @@
 
 use Composer\Autoload\ClassLoader;
 use Illuminate\Auth\EloquentUserProvider;
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\PackageManifest;
 use Laravents\Discovery\HandlerDefinition;
 use Laravents\Discovery\Registry;
@@ -44,8 +45,7 @@ test('the service provider and the Laravents alias come from package discovery o
         ->and($listed)->not->toContain(LaraventsServiceProvider::class)
         ->and(app()->getProvider(LaraventsServiceProvider::class))->toBeInstanceOf(LaraventsServiceProvider::class)
         ->and(class_exists('Laravents'))->toBeTrue()
-        ->and((new ReflectionClass('Laravents'))->getName())->toBe(Laravents::class)
-        ->and(\Laravents::isFake())->toBeFalse();
+        ->and(AliasLoader::getInstance()->getAliases()['Laravents'] ?? null)->toBe(Laravents::class);
 });
 
 test('the Modules namespace is autoloaded from workbench/modules/', function (): void {

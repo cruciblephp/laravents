@@ -185,7 +185,7 @@ test('the canvas lists unheard events, every listener, and skips messages', func
         (new RegistryBuilder('Laravents\Tests\Fixtures\Discovery'))->build($classes),
         $classes,
         'Laravents\Tests\Fixtures\Discovery',
-        new DependencyScanner('Laravents\Tests\Fixtures\Discovery')->scan(ClassDiscovery::structures($paths)),
+        (new DependencyScanner('Laravents\Tests\Fixtures\Discovery'))->scan(ClassDiscovery::structures($paths)),
     );
     $shop = $canvas->for('Shop');
     $listeners = $canvas->for('Listeners');
@@ -215,7 +215,7 @@ test('a command message is not an event even without a handler, a Publishable re
     $paths = [dirname(__DIR__, 2).'/Fixtures/Canvas'];
     $classes = ClassDiscovery::in($paths);
     $root = 'Laravents\Tests\Fixtures\Canvas';
-    $canvas = new ModuleCanvas((new RegistryBuilder($root))->build($classes), $classes, $root, new DependencyScanner($root)->scan(ClassDiscovery::structures($paths)));
+    $canvas = new ModuleCanvas((new RegistryBuilder($root))->build($classes), $classes, $root, (new DependencyScanner($root))->scan(ClassDiscovery::structures($paths)));
 
     expect(array_column($canvas->for('Gig')['events_published'], 'event'))->toBe([$root.'\Gig\Api\GigView'])
         ->and($canvas->for('Fans')['events_consumed'])->toBe([]);
@@ -257,7 +257,7 @@ test('the canvas lists a pattern handler under each published event its pattern 
         (new RegistryBuilder('Laravents\Tests\Fixtures\Patterns'))->build($classes),
         $classes,
         'Laravents\Tests\Fixtures\Patterns',
-        new DependencyScanner('Laravents\Tests\Fixtures\Patterns')->scan(ClassDiscovery::structures($paths)),
+        (new DependencyScanner('Laravents\Tests\Fixtures\Patterns'))->scan(ClassDiscovery::structures($paths)),
     );
 
     expect($canvas->modules())->toBe(['Audit', 'Chat', 'Room'])

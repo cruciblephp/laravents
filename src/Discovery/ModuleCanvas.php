@@ -56,7 +56,7 @@ final readonly class ModuleCanvas
             $registry,
             ClassDiscovery::in($paths),
             $namespace,
-            new DependencyScanner($namespace)->scan(ClassDiscovery::structures($paths)),
+            (new DependencyScanner($namespace))->scan(ClassDiscovery::structures($paths)),
             Endpoints::fromConfig($config),
         );
     }
@@ -283,7 +283,7 @@ final readonly class ModuleCanvas
             }
         }
 
-        foreach (new Verifier($this->rootNamespace)->direction($this->dependencies) as $violation) {
+        foreach ((new Verifier($this->rootNamespace))->direction($this->dependencies) as $violation) {
             if (RoutingKey::module($violation->class, $this->rootNamespace) === $module) {
                 $outside[(string) RoutingKey::module($violation->uses, $this->rootNamespace)][$violation->class] = true;
             }
@@ -336,7 +336,7 @@ final readonly class ModuleCanvas
     /** @return list<string> */
     private function returnTypes(HandlerDefinition $handler): array
     {
-        $type = new ReflectionMethod($handler->class, $handler->method)->getReturnType();
+        $type = (new ReflectionMethod($handler->class, $handler->method))->getReturnType();
         $types = $type instanceof ReflectionUnionType ? $type->getTypes() : [$type];
 
         return array_values(array_map(

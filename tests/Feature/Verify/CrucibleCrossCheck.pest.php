@@ -30,7 +30,7 @@ function crossCheck(string $set): array
 
     $scanner = [];
 
-    foreach (new DependencyScanner($root)->scan(ClassDiscovery::structures([dirname(__DIR__, 3).'/'.$directory])) as $dependency) {
+    foreach ((new DependencyScanner($root))->scan(ClassDiscovery::structures([dirname(__DIR__, 3).'/'.$directory])) as $dependency) {
         $scanner[] = $dependency->class.' -> '.$dependency->uses;
     }
 

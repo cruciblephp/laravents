@@ -230,7 +230,7 @@ test('a prefix keeps only the names under it, and a name is reported at its firs
 
 test('scan() gives each class its file\'s references into the modules namespace, not its own name', function (): void {
     $root = 'Laravents\Tests\Fixtures\Verify\Direction';
-    $dependencies = new DependencyScanner($root)->scan(ClassDiscovery::structures([dirname(__DIR__, 2).'/Fixtures/Verify/Direction']));
+    $dependencies = (new DependencyScanner($root))->scan(ClassDiscovery::structures([dirname(__DIR__, 2).'/Fixtures/Verify/Direction']));
     $file = dirname(__DIR__, 2).'/Fixtures/Verify/Direction/Billing/Handlers/ChargeOnOrderPlaced.php';
 
     expect($dependencies)->toEqual([

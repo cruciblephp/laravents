@@ -28,7 +28,9 @@ final class ShowCommand extends Command
     {
         $canvas = ModuleCanvas::fromConfig($registry, $config);
 
-        $module = (string) $this->argument('module');
+        // The input's own value, typed the same whether or not static analysis can boot the command.
+        $module = $this->input->getArgument('module');
+        $module = is_string($module) ? $module : '';
         $modules = $canvas->modules();
 
         if (! in_array($module, $modules, true)) {
@@ -55,7 +57,7 @@ final class ShowCommand extends Command
     /** @param Canvas $data */
     private function displayJson(array $data): void
     {
-        $this->output->writeln(new Collection($data)->toJson());
+        $this->output->writeln((new Collection($data))->toJson());
     }
 
     /** @param Canvas $data */

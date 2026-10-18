@@ -45,7 +45,7 @@ final class VerifyCommand extends Command
         $classes = ClassDiscovery::structures($paths);
 
         $verifier = new Verifier($namespace);
-        $dependencies = new DependencyScanner($namespace)->scan(array_values(array_unique([...$classes, ...ClassDiscovery::structures([app_path()])])));
+        $dependencies = (new DependencyScanner($namespace))->scan(array_values(array_unique([...$classes, ...ClassDiscovery::structures([app_path()])])));
         $modules = $verifier->modules($classes);
         $graph = $verifier->graph($modules, $dependencies);
         $cycleSeverity = $this->option('allow-cycles') ? 'warning' : 'error';
@@ -123,12 +123,12 @@ final class VerifyCommand extends Command
      */
     private function displayJson(array $modules, array $graph, array $violations, bool $passed): void
     {
-        $this->output->writeln(new Collection([
+        $this->output->writeln((new Collection([
             'modules' => $modules,
             'graph' => $graph,
             'violations' => $violations,
             'passed' => $passed,
-        ])->toJson(JSON_UNESCAPED_SLASHES));
+        ]))->toJson(JSON_UNESCAPED_SLASHES));
     }
 
     /**

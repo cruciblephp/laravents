@@ -70,6 +70,7 @@
             "@lint",
             "@refactor",
             "@analyse",
+            "@prepare",
             "@test"
         ]
     },
