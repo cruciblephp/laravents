@@ -27,11 +27,21 @@ return [
     | loads. The registry cache holds the list it was built with, so a change
     | takes effect after the next laravents:cache. laravents:verify still checks
     | every module.
+    |
+    | A module may describe itself in a module.json in its directory under path.
+    | manifest names the class each file is hydrated into, as a message is from
+    | its payload: the class is the application's schema, its constructor the
+    | fields, and a file that does not build it fails discovery and
+    | laravents:verify. Laravents::manifest('Band', Manifest::class) reads one,
+    | typed. null reads no file. With manifest_required, a module with no
+    | module.json fails too.
     */
     'modules' => [
         'namespace' => 'Modules',
         'path' => base_path('modules'),
         'disabled' => [],
+        'manifest' => null,
+        'manifest_required' => false,
     ],
 
     /*

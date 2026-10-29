@@ -9,12 +9,11 @@ use Laravents\Concerns\Askable;
 use Laravents\Concerns\Publishable;
 use Laravents\Concerns\Sendable;
 use Laravents\Http\Endpoints;
+use Laravents\Invocation\Type;
 use Laravents\Verify\Dependency;
 use Laravents\Verify\DependencyScanner;
 use Laravents\Verify\Verifier;
 use ReflectionMethod;
-use ReflectionNamedType;
-use ReflectionUnionType;
 
 /**
  * One module as Spring Modulith's module canvas sees it: the commands and queries it handles, the events in its
@@ -336,13 +335,7 @@ final readonly class ModuleCanvas
     /** @return list<string> */
     private function returnTypes(HandlerDefinition $handler): array
     {
-        $type = (new ReflectionMethod($handler->class, $handler->method))->getReturnType();
-        $types = $type instanceof ReflectionUnionType ? $type->getTypes() : [$type];
-
-        return array_values(array_map(
-            static fn (ReflectionNamedType $type): string => $type->getName(),
-            array_filter($types, static fn (mixed $type): bool => $type instanceof ReflectionNamedType),
-        ));
+        return Type::of((new ReflectionMethod($handler->class, $handler->method))->getReturnType())->names();
     }
 
     /** @return list<HandlerDefinition> */

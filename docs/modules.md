@@ -159,6 +159,8 @@ Discovery fails loudly, at boot during development and at `laravents:cache` in p
 | `laravents.modules.namespace` | `'Modules'` | The modules root. The segment under it is the module; routing keys and default queues come from it. |
 | `laravents.modules.path` | `base_path('modules')` | The directory that namespace maps to in `composer.json`. The generators write here. |
 | `laravents.modules.disabled` | `[]` | Modules left out of discovery. See [turning a module off](#turning-a-module-off). |
+| `laravents.modules.manifest` | `null` | The class each module's `module.json` is hydrated into, or `null` to read none. See [a module's manifest](#a-modules-manifest). |
+| `laravents.modules.manifest_required` | `false` | Whether a module with no `module.json` fails discovery. |
 
 The first three are independent: `paths` is a discovery list (several directories, inside or outside the modules), `modules.namespace` decides what a module is, and `modules.path` is the one directory the generators write into. An application that keeps its modules in `src/Domain` under `Acme\Domain\` sets `paths` to `[base_path('src/Domain')]`, `modules.namespace` to `'Acme\Domain'` and `modules.path` to `base_path('src/Domain')`. The example application sets `paths` and `modules.path` to its `workbench/modules` directory in [`workbench/app/Providers/WorkbenchServiceProvider.php`](../workbench/app/Providers/WorkbenchServiceProvider.php).
 
@@ -179,6 +181,46 @@ The list is the application's to compute, as any config value is, from the envir
 - `php artisan about` names the disabled modules. `laravents:list` leaves their handlers out, and `laravents:show` and `laravents:docs` show such a module with no handlers, since they read the registry.
 
 Proven by `tests/Feature/Discovery/DisabledModules.pest.php` and `tests/Feature/Console/About.pest.php`.
+
+## A module's manifest
+
+A module may describe itself in a `module.json` in its directory, data any tool can read ([`workbench/modules/Band/module.json`](../workbench/modules/Band/module.json)):
+
+```json
+{
+    "version": "1.0.0",
+    "description": "The band: its line-up and the nicknames its members give"
+}
+```
+
+What a manifest says is the application's to decide, not Laravents': `laravents.modules.manifest` names a class, and its constructor is the schema ([`workbench/app/Support/ModuleManifest.php`](../workbench/app/Support/ModuleManifest.php)):
+
+```php
+final readonly class ModuleManifest
+{
+    public function __construct(
+        public string $version,
+        public string $description = '',
+    ) {}
+}
+```
+
+Discovery hydrates each `module.json` into that class with the `PayloadConverter` that builds every message, so PHP reads it typed and no caller narrows a field:
+
+```php
+Laravents::manifest('Band', ModuleManifest::class)?->version;  // '1.0.0'
+Laravents::manifest('Press', ModuleManifest::class);           // null: Press has no module.json
+Laravents::modules();                                          // ['Band' => Module, 'FanClub' => Module, 'Press' => Module]
+Laravents::module('Billing');                                  // null: no such module
+```
+
+- **The class is the schema, enforced at discovery.** A field the class does not take, a field of the wrong type, a required field missing, or a file that is not a JSON object fails discovery naming the file and why (`.../Band/module.json has [colour], which ModuleManifest does not take.`): at boot during development, at `laravents:cache`, and in `laravents:verify`. Types are held as `strict_types` holds them: `2` is not a `string`. JSON has one number type, so `1` is a `float` and `1.0` an `int`, as JSON Schema reads them; `1.5` is not an `int`.
+- **`manifest_required`** makes a module with no `module.json` fail as well. Without it, such a module has no manifest.
+- **Every module is listed**, by name and sorted, the disabled ones too, as `laravents:verify` sees them. A `Module` carries `name`, `namespace`, `disabled` and `manifest`.
+- **The manifests are part of the registry**, so `laravents:cache` caches them and a cached boot reads no JSON. They are not messages: `Laravents::fake()` leaves them as they are.
+- **`Laravents::manifest()` is typed as the class asked for.** Asking for another class than `laravents.modules.manifest` is a mistake in the caller, and throws a `LogicException`.
+
+Proven by `tests/Feature/Discovery/ModuleList.pest.php`.
 
 ## Seeing the modules
 

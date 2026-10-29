@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Laravents\Invocation;
 
 use Laravents\Attributes\Header;
-use ReflectionNamedType;
 use ReflectionParameter;
 
 /**
@@ -28,14 +27,10 @@ final readonly class ParameterPlan
 
     public static function of(ReflectionParameter $parameter): self
     {
-        $type = $parameter->getType();
-        // A built-in type (int, array, ...) is neither a class nor an interface, so the check below leaves it out.
-        $class = $type instanceof ReflectionNamedType ? $type->getName() : null;
-
         return new self(
             name: $parameter->getName(),
             header: ($parameter->getAttributes(Header::class)[0] ?? null)?->newInstance()->name,
-            class: $class !== null && (class_exists($class) || interface_exists($class)) ? $class : null,
+            class: Type::of($parameter)->class(),
             nullable: $parameter->allowsNull(),
             hasDefault: $parameter->isDefaultValueAvailable(),
             reflection: $parameter,

@@ -9,6 +9,8 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Laravents\Discovery\ClassDiscovery;
+use Laravents\Discovery\ManifestReader;
+use Laravents\Discovery\Module;
 use Laravents\Discovery\RegistryBuilder;
 use Laravents\Exceptions\DiscoveryException;
 use Laravents\Verify\Dependency;
@@ -51,7 +53,7 @@ final class VerifyCommand extends Command
         $cycleSeverity = $this->option('allow-cycles') ? 'warning' : 'error';
 
         $violations = [
-            ...$this->registry($namespace, $paths),
+            ...$this->registry($config, $namespace, $paths),
             ...array_map(fn (Dependency $dependency): array => $this->dependencyViolation('direction', $dependency), $verifier->direction($dependencies)),
             ...array_map(fn (Dependency $dependency): array => $this->dependencyViolation('api_purity', $dependency), $verifier->apiPurity($dependencies)),
             ...array_map(static fn (array $cycle): array => [
@@ -75,16 +77,17 @@ final class VerifyCommand extends Command
     }
 
     /**
-     * Building the registry, as the service provider does, surfaces duplicate keys, invalid attributes and unknown
-     * pointcuts.
+     * Building the registry, as the service provider does, surfaces duplicate keys, invalid attributes, unknown
+     * pointcuts and a module.json that does not build the manifest class.
      *
      * @param  list<string>  $paths
      * @return list<Violation>
      */
-    private function registry(string $namespace, array $paths): array
+    private function registry(Repository $config, string $namespace, array $paths): array
     {
         try {
-            (new RegistryBuilder($namespace))->build(ClassDiscovery::in($paths));
+            $classes = ClassDiscovery::in($paths);
+            (new RegistryBuilder($namespace))->build($classes, Module::discover($classes, $namespace, [], ManifestReader::fromConfig($config, $this->laravel)));
         } catch (DiscoveryException $e) {
             return [[
                 'rule' => 'registry',

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Laravents\Discovery;
 
+use ReflectionAttribute;
+use ReflectionClass;
+use ReflectionMethod;
+
 /**
  * One discovered handler method. Plain data, so a registry can later be cached as PHP.
  */
@@ -57,5 +61,39 @@ final readonly class HandlerDefinition
     public function location(): string
     {
         return $this->handler().' ('.$this->file.':'.$this->line.')';
+    }
+
+    /**
+     * The handler's attribute of this class, or of a class that extends or implements it: the method's, else its
+     * class's, as an interceptor's pointcut is matched. Null when neither carries one. For an attribute of the
+     * application's own beside #[Expose] (a display text, what a write changes), read without reflection by the caller.
+     *
+     * @template T of object
+     *
+     * @param  class-string<T>  $attribute
+     * @return T|null
+     */
+    public function attribute(string $attribute): ?object
+    {
+        return $this->attributes($attribute)[0] ?? null;
+    }
+
+    /**
+     * Every attribute of this class, or of a class that extends or implements it, on the handler: the method's, then
+     * its class's.
+     *
+     * @template T of object
+     *
+     * @param  class-string<T>  $attribute
+     * @return list<T>
+     */
+    public function attributes(string $attribute): array
+    {
+        $found = [
+            ...(new ReflectionMethod($this->class, $this->method))->getAttributes($attribute, ReflectionAttribute::IS_INSTANCEOF),
+            ...(new ReflectionClass($this->class))->getAttributes($attribute, ReflectionAttribute::IS_INSTANCEOF),
+        ];
+
+        return array_map(static fn (ReflectionAttribute $found): object => $found->newInstance(), $found);
     }
 }

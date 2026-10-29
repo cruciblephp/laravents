@@ -39,6 +39,12 @@ test('hydration errors become ValidationExceptions naming the parameter', functi
         ->toThrow(ValidationException::class, 'The memberId field must be of type int.');
 });
 
+test('the field named is the one PHP refused, judged as the container\'s call coerces: a numeric string before it fits', function (): void {
+    $e = caught(ValidationException::class, static fn (): object => app(PayloadConverter::class)->convert(GiveNickname::class, ['memberId' => '2', 'nickname' => []]));
+
+    expect($e->errors())->toBe(['nickname' => ['The nickname field must be of type string.']]);
+});
+
 test('only a missing required scalar is reported: the container builds a class, and an optional one has its default', function (): void {
     $e = caught(ValidationException::class, static fn (): object => app(PayloadConverter::class)->convert(BookGig::class, []));
 

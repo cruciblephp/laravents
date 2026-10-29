@@ -8,8 +8,8 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Laravents\Invocation\Type;
 use ReflectionClass;
-use ReflectionNamedType;
 use Throwable;
 use TypeError;
 
@@ -39,7 +39,7 @@ final readonly class ContainerPayloadConverter implements PayloadConverter
                 $e instanceof BindingResolutionException => ValidationException::withMessages(
                     $this->missing($class, $payload) ?? ['payload' => [sprintf('The payload cannot build %s.', class_basename($class))]],
                 ),
-                $e instanceof TypeError => ValidationException::withMessages($this->mistyped($class, $e) ?? ['payload' => [$e->getMessage()]]),
+                $e instanceof TypeError => ValidationException::withMessages($this->mistyped($class, $payload) ?? ['payload' => [$e->getMessage()]]),
                 default => $e,
             };
         }
@@ -63,8 +63,7 @@ final readonly class ContainerPayloadConverter implements PayloadConverter
         $errors = [];
 
         foreach ((new ReflectionClass($class))->getConstructor()?->getParameters() ?? [] as $parameter) {
-            $type = $parameter->getType();
-            $builtin = ! $type instanceof ReflectionNamedType || $type->isBuiltin();
+            $builtin = Type::of($parameter)->named() === null;
 
             if ($builtin && ! $parameter->isOptional() && ! array_key_exists($parameter->getName(), $payload)) {
                 $errors[$parameter->getName()] = [sprintf('The %s field is required.', $parameter->getName())];
@@ -75,19 +74,24 @@ final readonly class ContainerPayloadConverter implements PayloadConverter
     }
 
     /**
-     * The constructor argument PHP rejected, read from the TypeError PHP raised for it.
+     * The constructor argument PHP rejected: the first given field its parameter's type does not take, as the
+     * container's call coerces (Type, not strict). Null when every field fits, so the TypeError was not about one.
      *
      * @param  class-string  $class
+     * @param  array<string, mixed>  $payload
      * @return array<string, list<string>>|null
      */
-    private function mistyped(string $class, TypeError $error): ?array
+    private function mistyped(string $class, array $payload): ?array
     {
-        $pattern = '/^'.preg_quote($class, '/').'::__construct\(\): Argument #\d+ \(\$(\w+)\) must be of type ([^,]+),/';
+        foreach ((new ReflectionClass($class))->getConstructor()?->getParameters() ?? [] as $parameter) {
+            $name = $parameter->getName();
+            $type = Type::of($parameter);
 
-        if (preg_match($pattern, $error->getMessage(), $match) !== 1) {
-            return null;
+            if (array_key_exists($name, $payload) && ! $type->accepts($payload[$name], strict: false)) {
+                return [$name => [sprintf('The %s field must be of type %s.', $name, $type)]];
+            }
         }
 
-        return [$match[1] => [sprintf('The %s field must be of type %s.', $match[1], $match[2])]];
+        return null;
     }
 }

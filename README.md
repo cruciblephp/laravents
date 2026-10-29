@@ -41,7 +41,7 @@ php artisan laravents:module Band
 php artisan laravents:command GiveNickname --module=Band
 ```
 
-A module is a namespace: `Modules\Band\Api` is what other modules may use, everything else in `Modules\Band` is its own. [Installation](docs/installation.md) and [modules](docs/modules.md) in the manual have the details.
+A module is a namespace: `Modules\Band\Api` is what other modules may use, everything else in `Modules\Band` is its own. A module may describe itself in a `module.json`, hydrated into a class the application names, so `Laravents::manifest('Band', ModuleManifest::class)?->version` reads it typed and a file that does not fit fails discovery. [Installation](docs/installation.md) and [modules](docs/modules.md) in the manual have the details.
 
 ## The thirty-second example
 

@@ -13,8 +13,10 @@ use Laravents\Bus\PayloadConverter;
 use Laravents\Contracts\CommandBus;
 use Laravents\Contracts\EventBus;
 use Laravents\Contracts\QueryBus;
+use Laravents\Discovery\Module;
 use Laravents\Discovery\Registry;
 use Laravents\Testing\LaraventsFake;
+use LogicException;
 use RuntimeException;
 
 /**
@@ -85,6 +87,44 @@ final class Laravents extends Facade
         return $fake;
     }
 
+    /**
+     * Every module by name, sorted, the disabled ones included, as discovery found them: the registry's list, so a
+     * cached registry answers it without a scan. Not a message, so fake() leaves it as it is.
+     *
+     * @return array<string, Module>
+     */
+    public static function modules(): array
+    {
+        return self::registry()->modules();
+    }
+
+    /** One module by name, or null when there is none. */
+    public static function module(string $name): ?Module
+    {
+        return self::registry()->module($name);
+    }
+
+    /**
+     * A module's manifest, typed as the application's manifest class: Laravents::manifest('Band', Manifest::class)?->version.
+     * Null when there is no such module or it has no module.json; asking for another class than
+     * laravents.modules.manifest is a mistake in the caller, and throws.
+     *
+     * @template T of object
+     *
+     * @param  class-string<T>  $class
+     * @return T|null
+     */
+    public static function manifest(string $module, string $class): ?object
+    {
+        $manifest = self::registry()->module($module)?->manifest;
+
+        if ($manifest === null || $manifest instanceof $class) {
+            return $manifest;
+        }
+
+        throw new LogicException(sprintf('The manifests are %s, not %s: laravents.modules.manifest names the class.', $manifest::class, $class));
+    }
+
     /** Whether fake() has replaced the buses. The facade root is a Gateway either way, so it asks the container. */
     public static function isFake(): bool
     {
@@ -117,5 +157,12 @@ final class Laravents extends Facade
     protected static function getFacadeAccessor(): string
     {
         return Gateway::class;
+    }
+
+    private static function registry(): Registry
+    {
+        $app = self::$app ?? throw new RuntimeException('A facade root has not been set.');
+
+        return $app->make(Registry::class);
     }
 }

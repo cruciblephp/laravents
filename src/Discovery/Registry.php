@@ -35,6 +35,7 @@ final class Registry
      * @param  list<ModelPublication>  $modelPublications  #[Publishes] on models, in discovery order
      * @param  list<HandlerDefinition>  $patternEventHandlers  #[EventHandler('band.*')], in discovery order
      * @param  string|null  $rootNamespace  The modules namespace, which an event object's derived key comes from
+     * @param  array<string, Module>  $modules  Every module by name, sorted, the disabled ones included (Module::discover())
      */
     public function __construct(
         private readonly array $handlers,
@@ -49,7 +50,24 @@ final class Registry
         private readonly array $modelPublications = [],
         private readonly array $patternEventHandlers = [],
         private readonly ?string $rootNamespace = null,
+        private readonly array $modules = [],
     ) {}
+
+    /**
+     * Every module by name, sorted, the disabled ones included: what Laravents::modules() answers.
+     *
+     * @return array<string, Module>
+     */
+    public function modules(): array
+    {
+        return $this->modules;
+    }
+
+    /** One module by name, or null when there is no such module: what Laravents::module() answers. */
+    public function module(string $name): ?Module
+    {
+        return $this->modules[$name] ?? null;
+    }
 
     /**
      * Every #[Publishes] on a discovered model: which Eloquent event of which model publishes which event.
@@ -93,6 +111,25 @@ final class Registry
     public function all(): array
     {
         return $this->handlers;
+    }
+
+    /**
+     * The #[Expose]d command or query handlers by routing key, sorted: what the HTTP gateway serves, for an adapter of
+     * the application's own to list. An event handler is never exposed, so none for events.
+     *
+     * @return array<string, HandlerDefinition>
+     */
+    public function exposed(HandlerKind $kind): array
+    {
+        $exposed = array_filter(match ($kind) {
+            HandlerKind::Command => $this->commands,
+            HandlerKind::Query => $this->queries,
+            HandlerKind::Event => [],
+        }, static fn (HandlerDefinition $handler): bool => $handler->exposed);
+
+        ksort($exposed);
+
+        return $exposed;
     }
 
     /** A handler by its Class@method, the name a queued job carries. */

@@ -196,3 +196,20 @@ Each resolves the key, refuses a handler that is not `#[Expose]`d or not of that
 A vapor-style controller takes the request's envelope, loops over its items, and for each calls `command()` or `query()` with the item's key, its fields and `['correlation_id' => $envelopeId]`; it catches `NotFoundHttpException` and `ValidationException` per item to write that item's error into its own response, so one bad item does not fail the batch, and returns the collected results in its own shape. It never reads the registry: whether a key is reachable is the service's decision, as it is for the gateway's routes.
 
 Proven by `tests/Feature/Http/ExposedDispatcher.pest.php`.
+
+### Describing what the adapter serves
+
+An adapter that describes its handlers, a client generated from them or a list of tools, reads what the gateway serves from the registry, and each handler's attributes of the application's own from its definition, with no reflection of its own:
+
+```php
+foreach (app(Registry::class)->exposed(HandlerKind::Command) as $key => $handler) {
+    $display = $handler->attribute(Display::class);   // the method's #[Display], else its class's, or null
+}
+```
+
+- **`Registry::exposed($kind)`** is the `#[Expose]`d command or query handlers by routing key, sorted; none for events, which are never exposed.
+- **`HandlerDefinition::attribute($class)`** is the handler's attribute of that class, or of one that extends or implements it: the method's, else its class's, as an interceptor's pointcut is matched. **`attributes($class)`** is every one, the method's in their order, then the class's.
+
+Describing is not deciding: what a request may reach is still `ExposedDispatcher`'s, above.
+
+Proven by `tests/Feature/Discovery/HandlerAttributes.pest.php`.

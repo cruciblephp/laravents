@@ -13,10 +13,9 @@ use Laravents\Exceptions\DiscoveryException;
 use Laravents\Interceptors\AuthorizationInterceptor;
 use Laravents\Interceptors\TransactionInterceptor;
 use Laravents\Invocation\MethodInvocation;
-use ReflectionAttribute;
+use Laravents\Invocation\Type;
 use ReflectionClass;
 use ReflectionMethod;
-use ReflectionNamedType;
 
 /**
  * Reads handler, interceptor and #[Publishes] attributes from classes and enforces the discovery rules, so mistakes fail at boot.
@@ -28,8 +27,11 @@ final readonly class RegistryBuilder
 
     public function __construct(private string $rootNamespace) {}
 
-    /** @param iterable<class-string> $classes */
-    public function build(iterable $classes): Registry
+    /**
+     * @param  iterable<class-string>  $classes
+     * @param  array<string, Module>  $modules  The registry's module list (Module::discover()), none by default
+     */
+    public function build(iterable $classes, array $modules = []): Registry
     {
         $handlers = [];
         $interceptors = [];
@@ -68,7 +70,7 @@ final readonly class RegistryBuilder
             }
         }
 
-        return $this->index($handlers, $interceptors, $publications);
+        return $this->index($handlers, $interceptors, $publications, $modules);
     }
 
     /** @param ReflectionClass<object> $class */
@@ -120,9 +122,7 @@ final readonly class RegistryBuilder
     private function takes(ReflectionMethod $method, string $class): bool
     {
         foreach ($method->getParameters() as $parameter) {
-            $type = $parameter->getType();
-
-            if ($type instanceof ReflectionNamedType && $type->getName() === $class) {
+            if (Type::of($parameter)->named() === $class) {
                 return true;
             }
         }
@@ -136,12 +136,10 @@ final readonly class RegistryBuilder
      */
     private function apply(InterceptorDefinition $interceptor, HandlerDefinition $handler): ?AppliedInterceptor
     {
-        $attribute = (new ReflectionMethod($handler->class, $handler->method))->getAttributes($interceptor->pointcut, ReflectionAttribute::IS_INSTANCEOF)[0]
-            ?? (new ReflectionClass($handler->class))->getAttributes($interceptor->pointcut, ReflectionAttribute::IS_INSTANCEOF)[0]
-            ?? null;
+        $attribute = $handler->attribute($interceptor->pointcut);
 
         if ($attribute !== null) {
-            return new AppliedInterceptor($interceptor, $attribute->newInstance());
+            return new AppliedInterceptor($interceptor, $attribute);
         }
 
         return is_a($handler->class, $interceptor->pointcut, true) ? new AppliedInterceptor($interceptor, null) : null;
@@ -276,23 +274,16 @@ final readonly class RegistryBuilder
     /** @return class-string|null */
     private function messageClass(ReflectionMethod $method): ?string
     {
-        $type = ($method->getParameters()[0] ?? null)?->getType();
-
-        if (! $type instanceof ReflectionNamedType || $type->isBuiltin()) {
-            return null;
-        }
-
-        $name = $type->getName();
-
-        return class_exists($name) || interface_exists($name) ? $name : null;
+        return Type::of($method->getParameters()[0] ?? null)->class();
     }
 
     /**
      * @param  list<HandlerDefinition>  $handlers
      * @param  list<InterceptorDefinition>  $interceptors
      * @param  list<ModelPublication>  $publications
+     * @param  array<string, Module>  $modules
      */
-    private function index(array $handlers, array $interceptors, array $publications): Registry
+    private function index(array $handlers, array $interceptors, array $publications, array $modules): Registry
     {
         $byKey = [HandlerKind::Command->value => [], HandlerKind::Query->value => []];
         $byMessage = [HandlerKind::Command->value => [], HandlerKind::Query->value => []];
@@ -363,6 +354,7 @@ final readonly class RegistryBuilder
             modelPublications: $publications,
             patternEventHandlers: $patternEvents,
             rootNamespace: $this->rootNamespace,
+            modules: $modules,
         );
     }
 }

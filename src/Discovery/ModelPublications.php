@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Laravents\Attributes\Publishes;
 use Laravents\Exceptions\DiscoveryException;
+use Laravents\Invocation\Type;
 use ReflectionClass;
-use ReflectionNamedType;
 
 /**
  * Reads #[Publishes] from a class and checks, at discovery, that each event can be built from the model, so a
@@ -79,10 +79,10 @@ final class ModelPublications
 
         if ($reflection->hasMethod('fromModel')) {
             $method = $reflection->getMethod('fromModel');
-            $type = ($method->getParameters()[0] ?? null)?->getType();
+            $named = Type::of($method->getParameters()[0] ?? null)->named();
 
             if (! $method->isPublic() || ! $method->isStatic() || $method->getNumberOfRequiredParameters() !== 1
-                || ! $type instanceof ReflectionNamedType || ! is_a($model, $type->getName())) {
+                || $named === null || ! $model instanceof $named) {
                 throw DiscoveryException::invalid($location, sprintf(
                     'publishes [%s], whose fromModel() must be public static and take the model as its one parameter',
                     $event,
@@ -95,9 +95,7 @@ final class ModelPublications
         $known = self::attributes($model);
 
         foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
-            $type = $parameter->getType();
-
-            if ($parameter->isOptional() && (! $type instanceof ReflectionNamedType || $type->isBuiltin())) {
+            if ($parameter->isOptional() && Type::of($parameter)->named() === null) {
                 continue;
             }
 

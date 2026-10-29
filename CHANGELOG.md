@@ -2,6 +2,16 @@
 
 Every release, as it ships.
 
+## v1.1.0 - 2026-10-29
+
+- Added `Laravents::modules()` and `Laravents::module($name)`: every module as a `Laravents\Discovery\Module` (`name`, `namespace`, `disabled`, `manifest`), from the registry, so `laravents:cache` caches it and `Laravents::fake()` leaves it
+- Added module manifests: a module's `module.json`, hydrated into the class `laravents.modules.manifest` names, its constructor the schema, each field held to its type as `strict_types` would; a file that does not fit fails discovery and `laravents:verify` naming the file, and `laravents.modules.manifest_required` makes a missing one fail too
+- Added `Laravents::manifest($module, $class)`: a module's manifest typed as the application's class
+- Added `LaraventsServiceProvider::scan()`'s optional container, which hydrates the manifests
+- Added `Registry::exposed($kind)`: the `#[Expose]`d command or query handlers by routing key, sorted, for an adapter that describes what it serves
+- Added `HandlerDefinition::attribute($class)` and `attributes($class)`: a handler's own attribute, the method's then the class's, as an interceptor's pointcut is matched, which now reads it the same way
+- Improved a mistyped payload field: the converter names it from the constructor's declared types, as the container's call coerces, instead of reading PHP's TypeError message
+
 ## v1.0.1 - 2026-10-18
 
 - Removed the `spatie/php-structure-discoverer` dependency, and `spatie/laravel-package-tools` with it: the classes in `laravents.paths` are found with Laravel's Symfony Finder and PHP's tokenizer, in the same order, so `laravel/framework` is the only requirement

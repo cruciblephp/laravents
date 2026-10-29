@@ -5,7 +5,7 @@ The reference for Laravents. The [README](../README.md) is the thirty-second exa
 The samples are excerpts of the example application in [`workbench/`](../workbench/README.md), which is not part of the package.
 
 1. [Installation](installation.md): requirements, `composer require`, the config, the migration, the modules autoload line, the first module, the registry cache, `about`.
-2. [Modules](modules.md): a module is a namespace, `Api` is public, a shared module, how routing keys and queues are derived, the explicit key, the configuration keys, turning a module off.
+2. [Modules](modules.md): a module is a namespace, `Api` is public, a shared module, how routing keys and queues are derived, the explicit key, the configuration keys, turning a module off, a module's manifest.
 3. [Commands and queries](commands-and-queries.md): `Sendable` and `Askable`, the facade by object or key, the pending builder, results, hydration, "Did you mean", `rules()`.
 4. [Events](events.md): `Publishable`, matching by type and key, sync, `#[Deferred]` and `#[Asynchronous]` handlers, `#[Publishes]` on models, Laravel's events in, known limits, when not to go asynchronous.
 5. [Interceptors](interceptors.md): `#[Authorize]`, `#[Transactional]`, writing an interceptor, pointcuts, precedence, what an interceptor may inject.

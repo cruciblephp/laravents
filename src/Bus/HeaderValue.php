@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Laravents\Bus;
 
-use ReflectionNamedType;
+use Laravents\Invocation\Type;
 use ReflectionParameter;
 
 /**
@@ -25,14 +25,14 @@ final class HeaderValue
 
     public static function for(ReflectionParameter $parameter, int|float|string|bool $value): int|float|string|bool
     {
-        $type = $parameter->getType();
+        $names = Type::of($parameter)->names();
 
-        // PHP widens an int to float itself, strict types or not.
-        if (! $type instanceof ReflectionNamedType || ! is_string($value)) {
+        // PHP widens an int to float itself, strict types or not; a union is left to PHP.
+        if (count($names) !== 1 || ! is_string($value)) {
             return $value;
         }
 
-        return match ($type->getName()) {
+        return match ($names[0]) {
             'int' => filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE) ?? $value,
             'float' => is_numeric($value) ? (float) $value : $value,
             'bool' => match (strtolower($value)) {

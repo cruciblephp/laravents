@@ -98,6 +98,11 @@ Headers are `array<string, scalar|null>`. A fourth interface marks a message rat
 | `as(Authenticatable $user, ?string $guard = null)` | `PendingMessage` | Start a message dispatched as this user ([metadata](metadata-and-actor.md#laraventsas)) |
 | `fake(array\|string\|Closure $messagesToFake = [])` | `LaraventsFake` | Replace the buses with a recording fake ([testing](testing.md)) |
 | `isFake()` | `bool` | Whether `fake()` is active |
+| `modules()` | `array<string, Module>` | Every module by name, sorted, the disabled ones included ([modules](modules.md#a-modules-manifest)) |
+| `module(string $name)` | `?Module` | One module, or `null` when there is none |
+| `manifest(string $module, class-string<T> $class)` | `?T` | The module's `module.json` as the application's manifest class, or `null`; another class than `laravents.modules.manifest` throws `LogicException` |
+
+`Laravents\Discovery\Module` is a readonly value: `string $name`, `string $namespace`, `bool $disabled`, `?object $manifest`. `modules()`, `module()` and `manifest()` read the registry, so `fake()` does not touch them.
 
 `PendingMessage` has `withHeader()`, `withHeaders()`, `as()`, then `command()`, `query()` or `publish()`, each taking the message and payload without headers.
 
@@ -112,13 +117,21 @@ After `fake()`, the facade also forwards the fake's methods: `except()`, `return
 | `command(string $key, array $fields, array $headers = [])` | the handler's result | Send an `#[Expose]`d command with validated fields; `NotFoundHttpException` when the key is not one |
 | `query(string $key, array $fields, array $headers = [])` | the handler's result | Ask an `#[Expose]`d query with validated fields; `NotFoundHttpException` when the key is not one |
 
+For an adapter that describes what it serves ([describing what the adapter serves](http-gateway.md#describing-what-the-adapter-serves)):
+
+| Method | Returns | Meaning |
+|---|---|---|
+| `Registry::exposed(HandlerKind $kind)` | `array<string, HandlerDefinition>` | The `#[Expose]`d command or query handlers by routing key, sorted; none for events |
+| `HandlerDefinition::attribute(class-string<T> $class)` | `?T` | The handler's attribute of that class or a subclass: the method's, else its class's |
+| `HandlerDefinition::attributes(class-string<T> $class)` | `list<T>` | Every one: the method's in their order, then the class's |
+
 ## Exceptions
 
 All in `Laravents\Exceptions`. Laravents also throws Laravel's own exceptions where Laravel has one: `ValidationException` for a payload, `AuthenticationException` and `AuthorizationException` from `#[Authorize]`, `ModelNotFoundException` for a deleted actor on the queue.
 
 | Exception | Extends | Thrown when |
 |---|---|---|
-| `DiscoveryException` | `LogicException` | Discovery finds an invalid handler, interceptor or `#[Publishes]` model: at boot during development, at `laravents:cache` in production, and reported by `laravents:verify` |
+| `DiscoveryException` | `LogicException` | Discovery finds an invalid handler, interceptor, `#[Publishes]` model or `module.json`: at boot during development, at `laravents:cache` in production, and reported by `laravents:verify` |
 | `UnknownRoutingKeyException` | `InvalidArgumentException` | A command or query is sent with a key no handler has (with "Did you mean"), or an object no handler takes |
 | `MissingHeaderException` | `LogicException` | A required `#[Header]` parameter has no such header on the message |
 | `ActorMismatchException` | `LogicException` | `#[Authorize]` finds that the guard named by `actor_guard` does not hold the user named by `actor_id` |
@@ -151,6 +164,8 @@ All in `Laravents\Exceptions`. Laravents also throws Laravel's own exceptions wh
 | `publishes [E], which is not an instantiable class` |
 | `publishes [E], whose fromModel() must be public static and take the model as its one parameter` |
 | `publishes [E], which cannot be built from it: constructor parameter [$p] names no attribute the model declares (...) and the event has no fromModel()` |
+
+A `module.json` names the file instead, then the reason: `is missing, and laravents.modules.manifest_required asks every module for one`, `cannot be read`, `is not valid JSON: ...`, `must hold a JSON object`, `has [f, ...], which M does not take`, `does not build M: the f field must be of type t`, or `does not build M: ...` with the converter's own words; `laravents.modules.manifest must be null or the class each module.json is hydrated into` for a name that is no class.
 
 A header only Laravents sets, passed by a caller, is an `InvalidArgumentException` (`Header [message_id] is set by Laravents and cannot be passed.`), and a message object passed with a second payload is one too.
 
