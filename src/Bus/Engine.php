@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Laravents\Bus;
 
-use Illuminate\Bus\Dispatcher;
 use Illuminate\Contracts\Container\Container;
 use Laravents\Discovery\HandlerDefinition;
 
@@ -14,18 +13,16 @@ use Laravents\Discovery\HandlerDefinition;
  */
 final readonly class Engine
 {
-    private Dispatcher $dispatcher;
-
-    public function __construct(private Container $container)
-    {
-        $this->dispatcher = new Dispatcher($container);
-        $this->dispatcher->map([Message::class => HandleMessage::class]);
-        $this->dispatcher->pipeThrough([MetadataPipe::class]);
-    }
+    public function __construct(private Container $container) {}
 
     public function dispatch(Message $message): mixed
     {
-        return $this->dispatcher->dispatchSync($message);
+        // What Bus\Dispatcher::dispatchSync did for a Message: the MetadataPipe, then HandleMessage, each resolved per
+        // dispatch as before, without the dispatcher's map, pipeline and handler lookup.
+        return $this->container->make(MetadataPipe::class)->handle(
+            $message,
+            fn (Message $message): mixed => $this->container->make(HandleMessage::class)->handle($message),
+        );
     }
 
     /**

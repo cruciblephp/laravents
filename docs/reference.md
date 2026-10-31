@@ -173,6 +173,8 @@ A header only Laravents sets, passed by a caller, is an `InvalidArgumentExceptio
 
 `message_id`, `causation_id`, `actor_id`, `actor_guard`, `timestamp`, `publication_id`. A caller may pass `correlation_id` and any header of its own ([metadata](metadata-and-actor.md#the-one-header-a-caller-may-pass)).
 
+`Laravents\Bus\Timestamp` writes `timestamp`: `Timestamp::now()` is the value for a message sent now, `Timestamp::using(Closure(): string $using)` sets the application's own form, and `Timestamp::normally()` puts the ISO 8601 form back ([metadata](metadata-and-actor.md#the-five-keys)).
+
 ## Commands
 
 `laravents:list`, `laravents:show`, `laravents:verify`, `laravents:docs`, `laravents:cache`, `laravents:clear`, `laravents:republish`, and the generators `laravents:module`, `laravents:command`, `laravents:query`, `laravents:event`, `laravents:interceptor`. Options and output on the [console page](console.md).

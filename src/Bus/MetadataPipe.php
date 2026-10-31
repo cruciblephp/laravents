@@ -7,7 +7,6 @@ namespace Laravents\Bus;
 use Closure;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Log\Context\Repository as Context;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -65,8 +64,8 @@ final readonly class MetadataPipe
         $message = $message->withHeaders([
             ...$message->headers,
             ...$metadata,
-            // Carbon's toJSON(), the ISO 8601 form Eloquent serializes every date to: UTC, microseconds, Z.
-            'timestamp' => Date::now()->toJSON(),
+            // ISO 8601 in UTC, microseconds and Z: the form Eloquent serializes every date to (Timestamp).
+            'timestamp' => Timestamp::now(),
         ]);
 
         return $this->metadata->within($metadata, static fn (): mixed => $next($message));

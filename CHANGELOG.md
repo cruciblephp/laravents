@@ -2,6 +2,14 @@
 
 Every release, as it ships.
 
+## v1.2.0 - 2026-10-31
+
+- Added `Laravents\Bus\Timestamp`: `using(Closure)` sets the `timestamp` header's form for every message, `normally()` puts the default back, as `Str::createUlidsUsing()` does for ids; unused, it costs one check per message
+- Changed the `timestamp` header to be written with PHP's `DateTimeImmutable`, in the same form (`2026-10-16T08:00:00.123456Z`); time frozen by `Date::setTestNow()` or `travelTo()` is still read from Carbon. An application whose `Date::useClass()` date overrides `toJSON()` now sets that form with `Timestamp::using()`
+- Improved dispatch: `Engine` runs `MetadataPipe` and then `HandleMessage` itself instead of through a `Bus\Dispatcher`, with the same steps in the same order
+- Improved dispatch: `PayloadConverter`, `MetadataPipe` and `ContextMetadata` are bound `scoped()`, one per request or job and flushed with `Context`, instead of being built for every message
+- Improved dispatch cost: a command through the HTTP adapter (`ExposedDispatcher`) is 265 us where it was 600 us, and through `CommandBus` 230 us where it was 520 us (PHP 8.5.12, opcache on, two no-op handlers, 5000 dispatches)
+
 ## v1.1.0 - 2026-10-29
 
 - Added `Laravents::modules()` and `Laravents::module($name)`: every module as a `Laravents\Discovery\Module` (`name`, `namespace`, `disabled`, `manifest`), from the registry, so `laravents:cache` caches it and `Laravents::fake()` leaves it

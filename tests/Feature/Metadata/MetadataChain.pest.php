@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
+use Laravents\Bus\Timestamp;
 use Laravents\Discovery\Registry;
 use Laravents\Discovery\RegistryBuilder;
 use Laravents\Facades\Laravents;
@@ -21,6 +22,11 @@ beforeEach(function (): void {
         BillingHandlers::class,
         ReceiptListener::class,
     ]));
+});
+
+// Laravel's teardown unfreezes Carbon; the timestamp's form is Laravents' own to put back.
+afterEach(function (): void {
+    Timestamp::normally();
 });
 
 /**
@@ -50,6 +56,19 @@ function idsOf(string $handler): Ids
     return $ids;
 }
 
+/** The `timestamp` header of a message sent now. */
+function timestampHeader(): string
+{
+    $metadata = Laravents::query('billing.inspect');
+    $timestamp = is_array($metadata) ? $metadata['timestamp'] ?? null : null;
+
+    if (! is_string($timestamp)) {
+        throw new RuntimeException('billing.inspect answered no timestamp.');
+    }
+
+    return $timestamp;
+}
+
 test('a message outside any other message gets a fresh ULID and is its own correlation root', function (): void {
     $metadata = Laravents::query('billing.inspect');
     $this->assertIsArray($metadata);
@@ -66,14 +85,42 @@ test('the timestamp header is Carbon\'s toJSON(): UTC with microseconds and Z, p
     $now = CarbonImmutable::parse('2026-10-16 10:00:00.123456', 'Europe/Madrid');
     Date::setTestNow($now);
 
-    $metadata = Laravents::query('billing.inspect');
-    $this->assertIsArray($metadata);
-    $timestamp = $metadata['timestamp'];
-    $this->assertIsString($timestamp);
+    $timestamp = timestampHeader();
 
     expect($timestamp)->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/')
         ->toBe('2026-10-16T08:00:00.123456Z')
         ->and(CarbonImmutable::parse($timestamp)->format('U.u'))->toBe($now->format('U.u'));
+});
+
+test('the timestamp header is written without Carbon when no test froze time, in the same form', function (): void {
+    $before = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+
+    $timestamp = timestampHeader();
+
+    $after = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+    $read = DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s.u\Z', $timestamp, new DateTimeZone('UTC'));
+
+    expect($timestamp)->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/')
+        ->and($read)->toBeInstanceOf(DateTimeImmutable::class)
+        ->and($read >= $before && $read <= $after)->toBeTrue()
+        ->and(CarbonImmutable::parse($timestamp)->toJSON())->toBe($timestamp);
+});
+
+test('an application writes the timestamp header its own way with Timestamp::using(), and normally() puts the default back', function (): void {
+    Timestamp::using(static fn (): string => 'at-the-cavern');
+
+    expect(timestampHeader())->toBe('at-the-cavern');
+
+    Timestamp::normally();
+
+    expect(timestampHeader())->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/');
+});
+
+test('the override wins over frozen time: what the application writes is the header', function (): void {
+    Date::setTestNow(CarbonImmutable::parse('2026-10-16 10:00:00', 'UTC'));
+    Timestamp::using(static fn (): string => Date::now()->format('U'));
+
+    expect(timestampHeader())->toBe('1792144800');
 });
 
 test('a nested publish inherits correlation_id and its causation_id is the parent message_id', function (): void {

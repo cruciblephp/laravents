@@ -12,7 +12,19 @@ Every message gets five metadata keys when it is dispatched, and keeps them as h
 | `actor_id` | The acting user's identifier, as a string; absent for a guest |
 | `actor_guard` | The name of the guard that user is on; absent for a guest |
 
-Two more headers are set by Laravents and never by a caller: `timestamp`, the moment of dispatch as Carbon's `toJSON()` writes it, the ISO 8601 form Eloquent serializes every date to: UTC, microseconds, `Z` (`2026-10-16T08:00:00.123456Z`), and `publication_id`, set only on an asynchronous handler's delivery (the outbox row's id).
+Two more headers are set by Laravents and never by a caller: `timestamp`, the moment of dispatch in the ISO 8601 form Carbon's `toJSON()` and Eloquent write every date in: UTC, microseconds, `Z` (`2026-10-16T08:00:00.123456Z`), and `publication_id`, set only on an asynchronous handler's delivery (the outbox row's id).
+
+`timestamp` is written with PHP's own `DateTimeImmutable`, not through Carbon. Time a test froze with `Date::setTestNow()` or `travelTo()` is honoured: while it is frozen, the moment is read from Carbon. An application that wants another form sets it once, and every message from then on carries it:
+
+```php
+use Laravents\Bus\Timestamp;
+
+Timestamp::using(static fn (): string => (string) now()->getTimestampMs());  // milliseconds since the epoch
+
+Timestamp::normally();  // the ISO 8601 form again
+```
+
+It is the pattern of Laravel's `Str::createUlidsUsing()`. Unused, it costs one check per message. An application whose `Date::useClass()` date overrides `toJSON()` used to get that form in `timestamp`; it sets it with `Timestamp::using()` now.
 
 The five keys also live in Laravel's `Context` for the length of the dispatch, under the same names. Context is what Laravel adds to every log line and carries into queued jobs, so a log line written inside a handler carries its `correlation_id` with no code. When the dispatch ends, the five keys are put back as they were before it, also when the handler throws; anything else a handler adds to Context stays.
 

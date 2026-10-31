@@ -17,9 +17,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravents\Bus\CommandBus;
 use Laravents\Bus\ContainerPayloadConverter;
+use Laravents\Bus\ContextMetadata;
 use Laravents\Bus\Engine;
 use Laravents\Bus\EventBus;
 use Laravents\Bus\HandleMessage;
+use Laravents\Bus\MetadataPipe;
 use Laravents\Bus\ModelEvents;
 use Laravents\Bus\NativeEvents;
 use Laravents\Bus\PayloadConverter;
@@ -72,7 +74,10 @@ final class LaraventsServiceProvider extends ServiceProvider
             $app->make(BusDispatcher::class),
             $app->bound('db.transactions') ? $app->make('db.transactions') : null,
         ));
-        $this->app->bind(PayloadConverter::class, ContainerPayloadConverter::class);
+        // Scoped, not bound: stateless over the container, one per request or job, flushed with Context.
+        $this->app->scoped(PayloadConverter::class, ContainerPayloadConverter::class);
+        $this->app->scoped(MetadataPipe::class);
+        $this->app->scoped(ContextMetadata::class);
 
         // Everything that dispatches depends on the contracts, so a fake bound in their place reaches it all.
         $this->app->bind(CommandBusContract::class, CommandBus::class);
