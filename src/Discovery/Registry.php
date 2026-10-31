@@ -14,9 +14,19 @@ use UnexpectedValueException;
  * Held by index: one list of handlers, and every lookup table points into it. A registry the builder made holds the
  * definitions themselves. One read back from the cache (fromArray()) holds them as plain rows and builds a definition
  * the first time it is looked up, so a request that dispatches one command builds one handler, not all of them.
+ *
+ * @phpstan-type HandlerRow array{string, string|null, class-string|null, class-string, string, string|null, string, string|null, bool, string, int, string|null}
+ * @phpstan-type InterceptorRow array{string, class-string, int, class-string, string, string, int}
+ * @phpstan-type PublicationRow array{class-string<\Illuminate\Database\Eloquent\Model>, string, class-string, bool, string, int}
+ * @phpstan-type ModuleRow array{string, string, bool, array{class-string, array<string, mixed>}|null}
+ * @phpstan-type AppliedRow array{int, array{class-string, array<array-key, mixed>}|bool}
+ * @phpstan-type RegistryData array{handlers: list<HandlerRow>, commands: array<string, int>, queries: array<string, int>, keysByMessage: array<value-of<HandlerKind>, array<class-string, string>>, typedEventHandlers: list<int>, keyedEventHandlers: array<string, list<int>>, interceptors: list<InterceptorRow>, interceptorsByHandler: array<string, list<AppliedRow>>, externalEventClasses: list<class-string>, modelPublications: list<PublicationRow>, patternEventHandlers: list<int>, rootNamespace: string|null, modules: list<ModuleRow>}
  */
 final class Registry
 {
+    /** The lists toArray() writes, every one of which a cache file must hold to be read back. */
+    public const array LISTS = ['handlers', 'commands', 'queries', 'keysByMessage', 'typedEventHandlers', 'keyedEventHandlers', 'interceptors', 'interceptorsByHandler', 'externalEventClasses', 'modelPublications', 'patternEventHandlers', 'modules'];
+
     /** @var array<string, list<HandlerDefinition>> Typed handlers by event class, resolved on first use */
     private array $resolvedEventHandlers = [];
 
@@ -29,7 +39,7 @@ final class Registry
     /** @var array<string, int>|null Handler index by Class@method, built on first use */
     private ?array $handlersByName = null;
 
-    /** @var list<HandlerDefinition|list<mixed>> In discovery order: a definition, or its row until first looked up */
+    /** @var array<int, HandlerDefinition|HandlerRow> In discovery order: a definition, or its row until first looked up */
     private array $handlers = [];
 
     /** @var array<string, int> */
@@ -61,12 +71,12 @@ final class Registry
      * @param  list<HandlerDefinition>  $typedEventHandlers  Unkeyed, matched by type
      * @param  array<string, list<HandlerDefinition>>  $keyedEventHandlers  By routing key
      * @param  list<InterceptorDefinition>  $interceptors  In discovery order
-     * @param  array<string, list<AppliedInterceptor>|list<array{int, array{class-string, array<array-key, mixed>}|bool}>>  $interceptorsByHandler  By Class@method, in precedence order; read back from the cache, [interceptor index, attribute] rows until the handler is first looked up: the attribute's class and plain arguments, true for one only reflection rebuilds, false for none
+     * @param  array<string, list<AppliedInterceptor>|list<AppliedRow>>  $interceptorsByHandler  By Class@method, in precedence order; read back from the cache, [interceptor index, attribute] rows until the handler is first looked up: the attribute's class and plain arguments, true for one only reflection rebuilds, false for none
      * @param  list<class-string>  $externalEventClasses  Unkeyed event handlers' classes outside the modules namespace
      * @param  list<ModelPublication>  $modelPublications  #[Publishes] on models, in discovery order
      * @param  list<HandlerDefinition>  $patternEventHandlers  #[EventHandler('band.*')], in discovery order
      * @param  string|null  $rootNamespace  The modules namespace, which an event object's derived key comes from
-     * @param  array<string, Module|list<mixed>>  $modules  Every module by name, sorted, the disabled ones included (Module::discover()); read back from the cache, rows until first looked up
+     * @param  array<string, Module|ModuleRow>  $modules  Every module by name, sorted, the disabled ones included (Module::discover()); read back from the cache, rows until first looked up
      */
     public function __construct(
         array $handlers,
@@ -83,10 +93,10 @@ final class Registry
         private readonly ?string $rootNamespace = null,
         private array $modules = [],
     ) {
-        $this->handlers = array_values($handlers);
         $index = [];
 
-        foreach ($this->handlers as $n => $handler) {
+        foreach ($handlers as $n => $handler) {
+            $this->handlers[$n] = $handler;
             $index[spl_object_id($handler)] = $n;
         }
 
@@ -95,9 +105,9 @@ final class Registry
 
         $this->commands = array_map($at, $commands);
         $this->queries = array_map($at, $queries);
-        $this->typedEventHandlers = array_values(array_map($at, $typedEventHandlers));
-        $this->keyedEventHandlers = array_map(static fn (array $list): array => array_values(array_map($at, $list)), $keyedEventHandlers);
-        $this->patternEventHandlers = array_values(array_map($at, $patternEventHandlers));
+        $this->typedEventHandlers = array_map($at, $typedEventHandlers);
+        $this->keyedEventHandlers = array_map(static fn (array $list): array => array_map($at, $list), $keyedEventHandlers);
+        $this->patternEventHandlers = array_map($at, $patternEventHandlers);
     }
 
     /**
@@ -108,7 +118,7 @@ final class Registry
      * through reflection then. A module manifest is written as its public properties, the constructor
      * parameters the manifest class takes.
      *
-     * @return array<string, mixed>
+     * @return RegistryData
      */
     public function toArray(): array
     {
@@ -154,31 +164,31 @@ final class Registry
      * A registry from toArray()'s data, building each definition when it is first looked up. $manifests rebuilds a
      * module manifest from its class and fields, as discovery built it (the payload converter).
      *
-     * @param  array<string, mixed>  $data
+     * @param  RegistryData  $data
      * @param  Closure(class-string, array<string, mixed>): object  $manifests
      */
     public static function fromArray(array $data, Closure $manifests): self
     {
-        $registry = new self([], [], [], self::list($data, 'keysByMessage'), [], [],
+        $registry = new self([], [], [], $data['keysByMessage'], [], [],
             array_map(static fn (array $r): InterceptorDefinition => new InterceptorDefinition(
                 InterceptorKind::from($r[0]), $r[1], $r[2], $r[3], $r[4], $r[5], $r[6],
-            ), self::list($data, 'interceptors')),
+            ), $data['interceptors']),
             [],
-            self::list($data, 'externalEventClasses'),
-            array_map(static fn (array $r): ModelPublication => new ModelPublication(...$r), self::list($data, 'modelPublications')),
+            $data['externalEventClasses'],
+            array_map(static fn (array $r): ModelPublication => new ModelPublication(...$r), $data['modelPublications']),
             [],
-            is_string($data['rootNamespace'] ?? null) ? $data['rootNamespace'] : null,
+            $data['rootNamespace'],
         );
 
-        $registry->handlers = self::list($data, 'handlers');
-        $registry->commands = self::list($data, 'commands');
-        $registry->queries = self::list($data, 'queries');
-        $registry->typedEventHandlers = self::list($data, 'typedEventHandlers');
-        $registry->keyedEventHandlers = self::list($data, 'keyedEventHandlers');
-        $registry->patternEventHandlers = self::list($data, 'patternEventHandlers');
-        $registry->interceptorsByHandler = self::list($data, 'interceptorsByHandler');
+        $registry->handlers = $data['handlers'];
+        $registry->commands = $data['commands'];
+        $registry->queries = $data['queries'];
+        $registry->typedEventHandlers = $data['typedEventHandlers'];
+        $registry->keyedEventHandlers = $data['keyedEventHandlers'];
+        $registry->patternEventHandlers = $data['patternEventHandlers'];
+        $registry->interceptorsByHandler = $data['interceptorsByHandler'];
 
-        foreach (self::list($data, 'modules') as $row) {
+        foreach ($data['modules'] as $row) {
             $registry->modules[$row[0]] = $row;
         }
 
@@ -264,10 +274,13 @@ final class Registry
         $name = $handler->handler();
         $applied = $this->interceptorsByHandler[$name] ?? [];
 
+        // A handler's list is all rows (read from the cache) until its first lookup, then all instances.
         if ($applied === [] || $applied[0] instanceof AppliedInterceptor) {
+            /** @var list<AppliedInterceptor> $applied */
             return $applied;
         }
 
+        /** @var list<AppliedRow> $applied */
         return $this->interceptorsByHandler[$name] = array_map(function (array $row) use ($handler): AppliedInterceptor {
             $interceptor = $this->interceptors[$row[0]];
 
@@ -459,7 +472,7 @@ final class Registry
         );
     }
 
-    /** @return list<mixed> */
+    /** @return HandlerRow */
     private function handlerRow(HandlerDefinition $h): array
     {
         return [
@@ -468,27 +481,17 @@ final class Registry
         ];
     }
 
-    /** @return list<mixed> */
+    /** @return ModuleRow */
     private function moduleRow(Module $module): array
     {
+        /** @var array<string, mixed> $fields */
+        $fields = $module->manifest === null ? [] : get_object_vars($module->manifest);
+
         return [
             $module->name,
             $module->namespace,
             $module->disabled,
-            $module->manifest === null ? null : [$module->manifest::class, get_object_vars($module->manifest)],
+            $module->manifest === null ? null : [$module->manifest::class, $fields],
         ];
-    }
-
-    /**
-     * An array member of the cached data; anything else means the file is not a registry this version wrote.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<array-key, mixed>
-     */
-    private static function list(array $data, string $key): array
-    {
-        $value = $data[$key] ?? null;
-
-        return is_array($value) ? $value : throw new UnexpectedValueException("The cached registry has no [{$key}] list.");
     }
 }

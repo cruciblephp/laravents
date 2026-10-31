@@ -58,6 +58,7 @@ test('an object of another class is a programmer error, not a 422', function ():
 })->throws(InvalidArgumentException::class, 'Expected '.GiveNickname::class.', got '.GetNickname::class.'.');
 
 test('a class that does not exist is a programmer error, not a 422', function (): void {
+    // @phpstan-ignore argument.type (a class that does not exist is what this test passes)
     app(PayloadConverter::class)->convert('Laravents\Tests\Fixtures\Bus\Converter\NoSuchGig', ['venue' => 'The Cavern']);
 })->throws(InvalidArgumentException::class, 'There is no class or interface Laravents\Tests\Fixtures\Bus\Converter\NoSuchGig to build.');
 

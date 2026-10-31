@@ -19,13 +19,17 @@ use Laravents\Tests\Fixtures\Bus\Converter\Ticketed;
  * test registers one thing makeWith() would run, and the message is built as the container builds it.
  */
 
-/** @param  array<string, mixed>  $payload */
+/**
+ * @param  array<string, mixed>  $payload
+ * @param  class-string  $class
+ */
 function convertGig(array $payload = ['venue' => 'The Cavern'], string $class = Gig::class): object
 {
     return app(PayloadConverter::class)->convert($class, $payload);
 }
 
 test('a container callback for the message class, a type it implements, or every type, still runs', function (Closure $register): void {
+    /** @var ArrayObject<int, mixed> $seen */
     $seen = new ArrayObject;
     $register(static function (mixed ...$arguments) use ($seen): void {
         $seen[] = $arguments[0];
@@ -65,6 +69,7 @@ test('a contextual binding for what the container is building now, by the class 
 ]);
 
 test('a class attribute\'s callback still sees the message', function (): void {
+    /** @var ArrayObject<int, mixed> $seen */
     $seen = new ArrayObject;
     app()->afterResolvingAttribute(GigMarker::class, static function (GigMarker $marker, object $gig) use ($seen): void {
         $seen[] = $gig;

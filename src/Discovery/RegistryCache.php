@@ -24,6 +24,8 @@ use Throwable;
  * is scanned. A file that is there but wrong is as inert as one that is missing. Whether a fingerprint that no longer
  * matches counts as wrong is `laravents.cache.stale`: `scan` (the default), or `cache`, which keeps reading the file
  * until the next laravents:cache.
+ *
+ * @phpstan-import-type RegistryData from Registry
  */
 final readonly class RegistryCache
 {
@@ -120,11 +122,21 @@ final readonly class RegistryCache
             return null;
         }
 
-        try {
-            // Anything but the array toArray() wrote fails fromArray()'s type or its lists, and reads as no cache.
-            /** @var array<string, mixed> $registry */
-            $registry = $file['registry'] ?? null;
+        $registry = $file['registry'] ?? null;
 
+        if (! is_array($registry)) {
+            return null;
+        }
+
+        // Every list toArray() writes must be there; within them, a value of the wrong type fails a constructor.
+        foreach (Registry::LISTS as $list) {
+            if (! is_array($registry[$list] ?? null)) {
+                return null;
+            }
+        }
+
+        try {
+            /** @phpstan-var RegistryData $registry */
             return Registry::fromArray($registry, $manifests);
         } catch (Throwable) {
             return null;

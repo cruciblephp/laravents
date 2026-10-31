@@ -199,7 +199,7 @@ final readonly class HandleMessage
         $instance = $this->container->make($class);
         $callable = [$instance, $method];
 
-        if (! is_callable($callable)) {
+        if (! is_object($instance) || ! is_callable($callable)) {
             throw new LogicException(sprintf('%s is not callable.', $location));
         }
 

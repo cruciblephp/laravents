@@ -9,6 +9,8 @@ use Illuminate\Foundation\Application;
 use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
+use function Orchestra\Testbench\default_skeleton_path;
+
 /**
  * Orchestra Testbench with the workbench as the application: its providers, migrations and routes come from
  * testbench.yaml (WithWorkbench), its configuration from Workbench\App\Providers\WorkbenchServiceProvider, the
@@ -25,23 +27,29 @@ class TestCase extends BaseTestCase
     protected $enablesPackageDiscoveries = true;
 
     /**
-     * After every test, the registry cache and any file written beside it are removed with plain PHP, not with
-     * RegistryCache::clear(): cleanup must not run the code under test, or a broken write or clear (a mutant) leaves
-     * files that fail the tests after it.
+     * Before and after every test, the registry cache and any file written beside it are removed with plain PHP, not
+     * with RegistryCache::clear(): cleanup must not run the code under test. Before, too: a process killed mid-test
+     * (a mutant that timed out) runs no teardown, and its file must not be there when the next test boots.
      */
     protected function setUp(): void
     {
+        $this->forgetRegistryCache();
+
         parent::setUp();
 
-        $this->beforeApplicationDestroyed(function (): void {
-            $cache = $this->app?->bootstrapPath('cache/laravents.php');
+        $this->beforeApplicationDestroyed($this->forgetRegistryCache(...));
+    }
 
-            foreach ($cache === null ? [] : [$cache, ...(glob($cache.'.*.tmp') ?: [])] as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
+    private function forgetRegistryCache(): void
+    {
+        $directory = default_skeleton_path('bootstrap/cache');
+        $cache = $directory === false ? null : $directory.'/laravents.php';
+
+        foreach ($cache === null ? [] : [$cache, ...(glob($cache.'.*.tmp') ?: [])] as $file) {
+            if (is_file($file)) {
+                unlink($file);
             }
-        });
+        }
     }
 
     /** @param  Application  $app */

@@ -44,6 +44,7 @@ test('the handler\'s body still resolves in the handler\'s context', function ()
 });
 
 test('a parameter attribute\'s callback still sees the argument', function (): void {
+    /** @var ArrayObject<int, mixed> $seen */
     $seen = new ArrayObject;
     app()->afterResolvingAttribute(Stamp::class, static function (Stamp $stamp, mixed $argument) use ($seen): void {
         $seen[] = $argument;

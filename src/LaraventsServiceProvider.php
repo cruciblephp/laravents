@@ -191,7 +191,11 @@ final class LaraventsServiceProvider extends ServiceProvider
      */
     public static function manifests(Container $container): Closure
     {
-        return static fn (string $class, array $fields): object => $container->make(PayloadConverter::class)->convert($class, $fields);
+        return static function (string $class, array $fields) use ($container): object {
+            /** @var class-string $class */
+            /** @var array<string, mixed> $fields */
+            return $container->make(PayloadConverter::class)->convert($class, $fields);
+        };
     }
 
     /**
