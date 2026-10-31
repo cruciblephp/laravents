@@ -175,7 +175,7 @@ The list is the application's to compute, as any config value is, from the envir
 ```
 
 - Only discovery changes. The module's service provider still loads, so its Gate abilities, routes and migrations stay; remove it from `bootstrap/providers.php` too to take the module out entirely.
-- The registry cache holds the list it was built with, as `config:cache` holds a config value: after a change, run `laravents:cache` (or `php artisan optimize`) again.
+- A change takes effect at once. The registry cache was written for the old list, so it is set aside and the registry scanned until the next `laravents:cache` (or `php artisan optimize`). With `laravents.cache.stale` set to `cache`, the cache keeps the old list until then instead ([installation](installation.md#production-the-registry-cache)).
 - `laravents:verify` still checks every module, the disabled ones too, so code that is switched off cannot rot past the module rules.
 - A name that is not a module disables nothing.
 - `php artisan about` names the disabled modules. `laravents:list` leaves their handlers out, and `laravents:show` and `laravents:docs` show such a module with no handlers, since they read the registry.
@@ -217,7 +217,7 @@ Laravents::module('Billing');                                  // null: no such 
 - **The class is the schema, enforced at discovery.** A field the class does not take, a field of the wrong type, a required field missing, or a file that is not a JSON object fails discovery naming the file and why (`.../Band/module.json has [colour], which ModuleManifest does not take.`): at boot during development, at `laravents:cache`, and in `laravents:verify`. Types are held as `strict_types` holds them: `2` is not a `string`. JSON has one number type, so `1` is a `float` and `1.0` an `int`, as JSON Schema reads them; `1.5` is not an `int`.
 - **`manifest_required`** makes a module with no `module.json` fail as well. Without it, such a module has no manifest.
 - **Every module is listed**, by name and sorted, the disabled ones too, as `laravents:verify` sees them. A `Module` carries `name`, `namespace`, `disabled` and `manifest`.
-- **The manifests are part of the registry**, so `laravents:cache` caches them and a cached boot reads no JSON. They are not messages: `Laravents::fake()` leaves them as they are.
+- **The manifests are part of the registry**, so `laravents:cache` caches them and a cached boot reads no JSON. The cache keeps a manifest's public properties and rebuilds it through the same converter when its module is first looked up, so a manifest class keeps its constructor parameters as public properties; `laravents:cache` refuses one that would not come back as it was built. They are not messages: `Laravents::fake()` leaves them as they are.
 - **`Laravents::manifest()` is typed as the class asked for.** Asking for another class than `laravents.modules.manifest` is a mistake in the caller, and throws a `LogicException`.
 
 Proven by `tests/Feature/Discovery/ModuleList.pest.php`.

@@ -2,6 +2,29 @@
 
 Every release, as it ships.
 
+## v1.3.0 - 2026-10-31
+
+- Changed the registry cache file to a plain PHP array written by `var_export()` (format 2), which opcache keeps in shared memory, in place of `unserialize(base64_decode(...))`; a file of the old format is set aside and the registry scanned until the next `laravents:cache`
+- Changed the cached registry to build each handler, its applied interceptors and each module the first time they are looked up, so a request that dispatches one command builds one handler
+- Added a fingerprint to the registry cache: what discovery read from the configuration (`paths`, the modules namespace and path, `disabled`, the manifest settings), the Laravents version and the file's format
+- Added `laravents.cache.stale` (`LARAVENTS_CACHE_STALE`): `scan`, the default, sets aside a cache written for another configuration, scans, and logs a warning once per application; `cache` reads it until the next `laravents:cache`, as before
+- Changed `laravents.modules.disabled` to take effect at once by default: a cache written for the old list is set aside
+- Added the read-back check to `laravents:cache`: the registry is rebuilt from the data about to be written and compared with the scan, interceptor attributes and module manifests included; one that would not come back as scanned is not written, and the command exits 1. A module manifest class must keep its constructor parameters as public properties
+- Added `Registry::toArray()`, `Registry::fromArray()` and `Registry::fromCache()`
+- Changed `RegistryCache::load()` to `load(?string $fingerprint, Closure $manifests): ?Registry`, answering null for a missing, unparsable, other-format or other-configuration file instead of throwing, and `RegistryCache::write()` to take the fingerprint; `RegistryCache::fingerprint()` computes it
+- Changed `RegistryCache::write()` to write a file beside the cache and rename it into place, so a request never includes half a file; a write or rename that fails (a full disk, a directory where the file goes) removes the file beside it, leaves the cache as it was and throws `RuntimeException`
+- Fixed `laravents:clear` (and `optimize:clear`) failing with an `ErrorException` when the cache file was removed by another process between the check and the delete; a file that is there and cannot be removed now throws `RuntimeException` naming it
+- Improved boot with a cached registry: a pointcut attribute (`#[Authorize]`, `#[Transactional]`, an application's own) is cached as its class and the arguments written in the source, and built with `new` on the handler's first lookup instead of through reflection, when every argument is a string, number, bool, null or an array of them; one with an enum or object argument is read through reflection as before. Loading the cached registry plus one command's handler and interceptors is 31 us where it was 41 us (the panel's 61 handlers, one attribute-matched interceptor, on battery, medians of five fresh processes each, alternated)
+- Fixed `laravents:list`, `laravents:show` and `about` saying the registry came from the cache when a cache file was there but not used; `about` now reads `Scanned (the cache file is stale: run laravents:cache)`
+- Fixed `ContainerPayloadConverter::convert()` throwing a bare `ReflectionException` for a class that does not exist; it throws `InvalidArgumentException` naming it, as for an object of another class, so it is never a 422. An interface is still built when the container binds it
+- Changed `MessageBus` to read its handler kind from the `KIND` class constant instead of the abstract `kind()` method; `CommandBus` and `QueryBus` set it
+- Improved dispatch: `ContainerPayloadConverter` builds a message from a constructor plan read once per class, when every constructor parameter is in the payload and the container has nothing of its own to run for the class (no binding, alias, extender, contextual binding or resolving callback; no class attribute; not `SelfBuilding`); otherwise through `makeWith()`, as before. Fields are coerced as the container coerces them, and the 422 messages are the same; a `TypeError` message passed on as is (no field found mistyped) no longer ends with `called in .../Container.php on line N`
+- Improved dispatch: a handler or interceptor whose every parameter the engine names is called through its reflection instead of the container's `call()`, when none of its parameters has an attribute or is variadic, the container built its class itself, and there is no `bindMethod()` binding or contextual binding for it; arguments are coerced as before. A `TypeError` from such a call no longer ends with `called in .../BoundMethod.php on line N`
+- Improved dispatch: a handler with no interceptors (so no `#[Authorize]` and no `#[Transactional]`) is called without building a `Pipeline`
+- Improved dispatch cost: a command through the HTTP adapter (`ExposedDispatcher`) is 37 us where it was 45 us, and through `CommandBus` 33 us where it was 39 us (PHP 8.5.12, opcache on, Xdebug not loaded, on AC power, two no-op handlers, 5000 dispatches, medians of nine fresh processes each, alternated)
+- Security: the registry cache no longer calls `unserialize()`, so a tampered cache file cannot inject objects
+- Improved boot with a cached registry: with 62 handlers in 21 modules, loading the registry is 31 us where it was 727 us, and loading it plus one command's handler, interceptors and module is 62 us where it was 763 us (PHP 8.5.12, opcache on, Laravel 13.39, medians of three fresh processes per format)
+
 ## v1.2.0 - 2026-10-31
 
 - Added `Laravents\Bus\Timestamp`: `using(Closure)` sets the `timestamp` header's form for every message, `normally()` puts the default back, as `Str::createUlidsUsing()` does for ids; unused, it costs one check per message

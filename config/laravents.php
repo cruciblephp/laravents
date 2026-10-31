@@ -24,9 +24,10 @@ return [
     | A module named in disabled is left out of discovery: its handlers,
     | interceptors and #[Publishes] models are not registered, so its messages
     | reach nobody, as if the module were not there. Its service provider still
-    | loads. The registry cache holds the list it was built with, so a change
-    | takes effect after the next laravents:cache. laravents:verify still checks
-    | every module.
+    | loads. A change to this list takes effect at once: the registry cache was
+    | written for the old list, so it is set aside and the registry is scanned
+    | until the next laravents:cache (cache.stale below). laravents:verify still
+    | checks every module.
     |
     | A module may describe itself in a module.json in its directory under path.
     | manifest names the class each file is hydrated into, as a message is from
@@ -42,6 +43,25 @@ return [
         'disabled' => [],
         'manifest' => null,
         'manifest_required' => false,
+    ],
+
+    /*
+    | The registry cache (laravents:cache) carries a fingerprint of what discovery
+    | read here: paths, the modules namespace and path, disabled and the manifest
+    | settings, with the Laravents version and the file's format. When the
+    | configuration in force no longer matches it, stale decides:
+    |
+    | scan  (default) the cache is set aside and the registry is scanned, and the
+    |       log says so once per process, until the next laravents:cache. A module
+    |       disabled since is out at once.
+    | cache the cache is read as it is until the next laravents:cache, as a route
+    |       cache is: a module disabled since stays in until then.
+    |
+    | A cache file of another format, or one that cannot be read, is always set
+    | aside.
+    */
+    'cache' => [
+        'stale' => env('LARAVENTS_CACHE_STALE', 'scan'),
     ],
 
     /*

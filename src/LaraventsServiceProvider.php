@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Laravents;
 
+use Closure;
 use Illuminate\Container\Container as ContainerInstance;
 use Illuminate\Contracts\Bus\Dispatcher as BusDispatcher;
 use Illuminate\Contracts\Config\Repository;
@@ -54,6 +55,9 @@ use Laravents\Outbox\PublisherConnection;
 
 final class LaraventsServiceProvider extends ServiceProvider
 {
+    /** Bound once the stale-cache warning was logged for this application. */
+    private const string STALE_WARNED = 'laravents.cache.stale-warned';
+
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/laravents.php', 'laravents');
@@ -159,15 +163,56 @@ final class LaraventsServiceProvider extends ServiceProvider
     }
 
     /**
-     * The cached registry when laravents:cache wrote one, else a scan.
+     * The cached registry when laravents:cache wrote one this version can trust, else a scan. Under
+     * `laravents.cache.stale` = `scan` (the default) a cache written for another configuration is not trusted: a
+     * module disabled since is out at once, and the log says the cache is stale, once per process.
      *
      * @throws DiscoveryException
      */
     private static function registry(Application $app): Registry
     {
         $cache = $app->make(RegistryCache::class);
+        $config = $app->make(Repository::class);
 
-        return $cache->exists() ? $cache->load() : self::scan($app->make(Repository::class), $app);
+        if (! $cache->exists()) {
+            return self::scan($config, $app);
+        }
+
+        $fingerprint = $config->get('laravents.cache.stale', 'scan') === 'cache' ? null : RegistryCache::fingerprint($config, $app->basePath());
+
+        return $cache->load($fingerprint, self::manifests($app)) ?? self::scanStale($app, $config, $cache);
+    }
+
+    /**
+     * Rebuilds a cached module manifest the way discovery built it: through the payload converter, from the fields
+     * the cache kept.
+     *
+     * @return Closure(class-string, array<string, mixed>): object
+     */
+    public static function manifests(Container $container): Closure
+    {
+        return static fn (string $class, array $fields): object => $container->make(PayloadConverter::class)->convert($class, $fields);
+    }
+
+    /**
+     * A cache file is there but cannot be used: scan, and say so once per application, so a stale cache costs a
+     * warning and a scan instead of serving yesterday's handlers. The mark lives in the container, not in a static:
+     * one application is one process in production (one worker under Octane), and a test's fresh application warns
+     * afresh.
+     *
+     * @throws DiscoveryException
+     */
+    private static function scanStale(Application $app, Repository $config, RegistryCache $cache): Registry
+    {
+        if (! $app->bound(self::STALE_WARNED) && $app->bound('log')) {
+            $app->instance(self::STALE_WARNED, true);
+            $app->make('log')->warning(sprintf(
+                'The Laravents registry cache [%s] was written for another configuration, version or format; scanning instead. Run php artisan laravents:cache.',
+                $cache->path,
+            ));
+        }
+
+        return self::scan($config, $app);
     }
 
     /**

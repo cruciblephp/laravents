@@ -35,7 +35,7 @@ final class About
     }
 
     /** @return array<string, string> */
-    private static function registryRows(Registry $registry, bool $cached): array
+    private static function registryRows(Registry $registry, bool $cacheFile): array
     {
         $modules = array_values(array_unique(array_filter(
             array_map(static fn (HandlerDefinition $handler): ?string => $handler->module, $registry->all()),
@@ -49,7 +49,11 @@ final class About
         ));
 
         return [
-            'Registry' => $cached ? 'Cached' : 'Scanned',
+            'Registry' => match (true) {
+                $registry->fromCache() => 'Cached',
+                $cacheFile => 'Scanned (the cache file is stale: run laravents:cache)',
+                default => 'Scanned',
+            },
             'Modules' => $modules === [] ? '0' : sprintf('%d (%s)', count($modules), implode(', ', $modules)),
             'Handlers' => sprintf(
                 '%d %s / %d %s / %d %s',

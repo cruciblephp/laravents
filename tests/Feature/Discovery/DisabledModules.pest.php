@@ -6,7 +6,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Laravents\Discovery\HandlerDefinition;
 use Laravents\Discovery\Registry;
-use Laravents\Discovery\RegistryCache;
 use Laravents\LaraventsServiceProvider;
 use Laravents\Outbox\EventPublication;
 use Modules\Band\Api\GiveNickname;
@@ -15,10 +14,6 @@ use Modules\Band\Models\Nickname;
 use Workbench\App\Models\User;
 
 uses(RefreshDatabase::class);
-
-afterEach(function (): void {
-    app(RegistryCache::class)->clear();
-});
 
 /** The registry a boot would build with the current config, put in place of the booted one. */
 function rescannedRegistry(): Registry
@@ -63,7 +58,7 @@ test('laravents:cache writes the registry without the disabled module', function
     config(['laravents.modules.disabled' => ['Press']]);
 
     expect(Artisan::call('laravents:cache'))->toBe(0)
-        ->and(app(RegistryCache::class)->load()->eventHandlersFor(NicknameGiven::class))->toBe([]);
+        ->and(cachedRegistry()->eventHandlersFor(NicknameGiven::class))->toBe([]);
 });
 
 test('laravents:verify still checks every module, the disabled one too', function (): void {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Laravents\Bus;
 
 use Closure;
+use Illuminate\Container\Container as IlluminateContainer;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\DatabaseTransactionsManager;
@@ -20,6 +21,7 @@ use Laravents\Invocation\Arguments;
 use Laravents\Invocation\MethodInvocation;
 use Laravents\Outbox\EventPublication;
 use LogicException;
+use ReflectionMethod;
 
 use function Illuminate\Support\defer;
 
@@ -62,13 +64,20 @@ final readonly class HandleMessage
 
     /**
      * Runs one handler through the interceptors its pointcuts match, outermost first. The single path
-     * for inline handlers and for asynchronous ones replayed from the queue.
+     * for inline handlers and for asynchronous ones replayed from the queue. With no interceptor (so no
+     * #[Authorize] and no #[Transactional] either) the handler is called as the Pipeline would call it.
      */
     public function invokeHandler(HandlerDefinition $handler, Message $message): mixed
     {
+        $interceptors = $this->registry->interceptorsFor($handler);
+
+        if ($interceptors === []) {
+            return $this->callHandler($handler, $message);
+        }
+
         $pipes = array_map(
             fn (AppliedInterceptor $applied): Closure => $this->pipe($applied, $handler),
-            $this->registry->interceptorsFor($handler),
+            $interceptors,
         );
 
         return (new Pipeline($this->container))
@@ -187,12 +196,45 @@ final readonly class HandleMessage
      */
     private function call(string $class, string $method, array $arguments, string $location): mixed
     {
-        $callable = [$this->container->make($class), $method];
+        $instance = $this->container->make($class);
+        $callable = [$instance, $method];
 
         if (! is_callable($callable)) {
             throw new LogicException(sprintf('%s is not callable.', $location));
         }
 
-        return $this->container->call($callable, $arguments);
+        $direct = $this->direct($class, $method, $instance, $arguments);
+
+        // Through reflection, as the container's call does from a file without strict_types: arguments are coerced alike.
+        return $direct instanceof ReflectionMethod
+            ? $direct->invokeArgs($instance, $arguments)
+            : $this->container->call($callable, $arguments);
+    }
+
+    /**
+     * The method, when calling it with $arguments is what the container's call would do: they name every parameter
+     * and nothing else, the container built $class itself, and holds no method binding for it and no contextual
+     * binding the method's body would be resolved in. Else null.
+     *
+     * @param  class-string  $class
+     * @param  array<string, mixed>  $arguments
+     */
+    private function direct(string $class, string $method, object $instance, array $arguments): ?ReflectionMethod
+    {
+        $reflection = Arguments::direct($class, $method);
+
+        if (! $reflection instanceof ReflectionMethod || $instance::class !== $class || count($arguments) !== $reflection->getNumberOfParameters()
+            || ! $this->container instanceof IlluminateContainer || $this->container->hasMethodBinding($class.'@'.$method)
+            || isset($this->container->contextual[$class]) || isset($this->container->contextual[$reflection->class])) {
+            return null;
+        }
+
+        foreach (Arguments::plan($class, $method) as $parameter) {
+            if (! array_key_exists($parameter->name, $arguments)) {
+                return null;
+            }
+        }
+
+        return $reflection;
     }
 }

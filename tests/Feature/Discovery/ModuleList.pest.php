@@ -7,7 +7,6 @@ use Laravents\Bus\PayloadConverter;
 use Laravents\Discovery\ManifestReader;
 use Laravents\Discovery\Module;
 use Laravents\Discovery\Registry;
-use Laravents\Discovery\RegistryCache;
 use Laravents\Exceptions\DiscoveryException;
 use Laravents\Facades\Laravents;
 use Laravents\LaraventsServiceProvider;
@@ -16,10 +15,6 @@ use Modules\Band\Handlers\BandHandlers;
 use Modules\Press\Handlers\PressHandlers;
 use Workbench\App\Models\User;
 use Workbench\App\Support\ModuleManifest;
-
-afterEach(function (): void {
-    app(RegistryCache::class)->clear();
-});
 
 /** The fixtures' reader: each module.json under tests/Fixtures/Manifests, hydrated into their Manifest. */
 function fixtureManifests(bool $required = false): ManifestReader
@@ -80,7 +75,7 @@ test('with no manifest class configured, no module.json is read', function (): v
 
 test('the cached registry carries the manifests, so a cached boot reads no module.json', function (): void {
     expect(Artisan::call('laravents:cache'))->toBe(0)
-        ->and(app(RegistryCache::class)->load()->module('Band')?->manifest)->toEqual(new ModuleManifest('1.0.0', 'The band: its line-up and the nicknames its members give'));
+        ->and(cachedRegistry()->module('Band')?->manifest)->toEqual(new ModuleManifest('1.0.0', 'The band: its line-up and the nicknames its members give'));
 });
 
 test('fake() leaves the modules as they are: they are not messages', function (): void {

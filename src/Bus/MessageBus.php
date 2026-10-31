@@ -19,7 +19,8 @@ abstract readonly class MessageBus
         private PayloadConverter $converter,
     ) {}
 
-    abstract protected function kind(): HandlerKind;
+    /** The kind of handler the bus routes to. CommandBus and QueryBus each set their own; PHP has no abstract constant. */
+    protected const HandlerKind KIND = HandlerKind::Command;
 
     /**
      * @param  array<string, mixed>|object  $payload
@@ -27,7 +28,7 @@ abstract readonly class MessageBus
      */
     protected function route(string $routingKey, array|object $payload, array $headers): mixed
     {
-        $kind = $this->kind();
+        $kind = static::KIND;
         $handler = $this->registry->handlerFor($kind, $routingKey)
             ?? throw UnknownRoutingKeyException::forKey($kind, $routingKey, $this->registry->routingKeys($kind));
 
@@ -41,8 +42,8 @@ abstract readonly class MessageBus
     /** @param array<string, scalar|null> $headers */
     protected function routeObject(object $message, array $headers): mixed
     {
-        $routingKey = $this->registry->routingKeyFor($message::class, $this->kind())
-            ?? throw UnknownRoutingKeyException::forClass($this->kind(), $message::class);
+        $routingKey = $this->registry->routingKeyFor($message::class, static::KIND)
+            ?? throw UnknownRoutingKeyException::forClass(static::KIND, $message::class);
 
         return $this->route($routingKey, $message, $headers);
     }

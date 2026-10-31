@@ -6,6 +6,8 @@ use Illuminate\Validation\ValidationException;
 use Laravents\Bus\ContainerPayloadConverter;
 use Laravents\Bus\PayloadConverter;
 use Laravents\Tests\Fixtures\Bus\Converter\BookGig;
+use Laravents\Tests\Fixtures\Bus\Converter\Gig;
+use Laravents\Tests\Fixtures\Bus\Converter\Ticketed;
 use Modules\Band\Api\GetNickname;
 use Modules\Band\Api\GiveNickname;
 
@@ -54,3 +56,13 @@ test('only a missing required scalar is reported: the container builds a class, 
 test('an object of another class is a programmer error, not a 422', function (): void {
     app(PayloadConverter::class)->convert(GiveNickname::class, new GetNickname(1));
 })->throws(InvalidArgumentException::class, 'Expected '.GiveNickname::class.', got '.GetNickname::class.'.');
+
+test('a class that does not exist is a programmer error, not a 422', function (): void {
+    app(PayloadConverter::class)->convert('Laravents\Tests\Fixtures\Bus\Converter\NoSuchGig', ['venue' => 'The Cavern']);
+})->throws(InvalidArgumentException::class, 'There is no class or interface Laravents\Tests\Fixtures\Bus\Converter\NoSuchGig to build.');
+
+test('an interface the container binds is built from the payload as before', function (): void {
+    app()->bind(Ticketed::class, Gig::class);
+
+    expect(app(PayloadConverter::class)->convert(Ticketed::class, ['venue' => 'The Cavern']))->toEqual(new Gig('The Cavern'));
+});

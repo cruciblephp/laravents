@@ -45,7 +45,7 @@ final class ShowCommand extends Command
 
         $data = $canvas->for($module);
 
-        if ($cache->exists() && ! $this->option('json')) {
+        if ($registry->fromCache() && ! $this->option('json')) {
             $this->components->info($cache->note($this->laravel->basePath()));
         }
 

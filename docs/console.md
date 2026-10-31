@@ -137,7 +137,9 @@ INFO Laravents registry cached successfully.
 INFO Laravents registry cache cleared successfully.
 ```
 
-`laravents:cache` clears first, so a failing build (a discovery error, printed with its location) exits 1 and leaves no cache at all. [Installation](installation.md#production-the-registry-cache) has the deployment side.
+`laravents:cache` clears first, so a failing build (a discovery error, printed with its location) exits 1 and leaves no cache at all. Before writing, it reads the registry back from the file's data and compares it with the scan; a registry that would not come back as it was scanned (a module manifest whose constructor parameters are not all public properties) is not written either, and the command exits 1. [Installation](installation.md#production-the-registry-cache) has the deployment side and `laravents.cache.stale`.
+
+`laravents:list` and `laravents:show` say `Registry loaded from the cache` only when the registry in use came from the file, not when a stale file was set aside.
 
 Proven by `tests/Feature/Console/Cache.pest.php`.
 

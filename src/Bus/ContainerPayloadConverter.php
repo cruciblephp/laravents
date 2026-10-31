@@ -8,6 +8,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Laravents\Invocation\Construction;
 use Laravents\Invocation\Type;
 use ReflectionClass;
 use Throwable;
@@ -30,10 +31,16 @@ final readonly class ContainerPayloadConverter implements PayloadConverter
             throw new InvalidArgumentException(sprintf('Expected %s, got %s.', $class, $payload::class));
         }
 
+        // A class that is not there is the caller's mistake, not the payload's: no 422. An interface may be bound.
+        if (! class_exists($class) && ! interface_exists($class)) {
+            throw new InvalidArgumentException(sprintf('There is no class or interface %s to build.', $class));
+        }
+
         try {
             // makeWith() calls the constructor: a missing parameter is a BindingResolutionException,
-            // a mistyped one is PHP's own TypeError. Anything else is not about the payload.
-            $object = $this->container->makeWith($class, $payload);
+            // a mistyped one is PHP's own TypeError. Anything else is not about the payload. Construction
+            // builds the object as makeWith() would when nothing of the container's own takes part.
+            $object = Construction::build($this->container, $class, $payload) ?? $this->container->makeWith($class, $payload);
         } catch (Throwable $e) {
             throw match (true) {
                 $e instanceof BindingResolutionException => ValidationException::withMessages(

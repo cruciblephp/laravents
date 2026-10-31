@@ -155,9 +155,9 @@ test('a key and an event class are resolved once per process: a second publish m
 
 test('the registry cache keeps each pattern compiled on its definition', function (): void {
     $cache = new RegistryCache(storage_path('framework/testing/laravents-patterns.php'));
-    $cache->write(patternRegistry());
-    $loaded = $cache->load();
-    $cache->clear();
+    $cache->write(patternRegistry(), RegistryCache::fingerprint(config(), app()->basePath()));
+    $loaded = cachedRegistry($cache);
+    unlink($cache->path);
 
     expect($loaded->handler(ChatAudit::class.'@everyChatEvent')?->pattern)->toBe('/^chat\.[^.]+$/')
         ->and($loaded->handler(ChatAudit::class.'@everyChatEvent')?->routingKey)->toBe('chat.*')

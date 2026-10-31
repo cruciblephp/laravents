@@ -180,13 +180,7 @@ final class DependencyScanner
      */
     private function import(int $i): int
     {
-        $j = $i + 1;
-        $classLike = true;
-
-        if (($this->tokens[$j] ?? null)?->is([T_FUNCTION, T_CONST]) === true) {
-            $classLike = false;
-            $j++;
-        }
+        [$j, $classLike] = $this->importKind($i + 1, true);
 
         while (($this->tokens[$j] ?? null)?->is(self::NAMES) === true) {
             $name = $this->tokens[$j];
@@ -197,16 +191,7 @@ final class DependencyScanner
                 return $this->importGroup(ltrim($name->text, '\\'), $j + 2, $classLike);
             }
 
-            $alias = null;
-
-            if ($this->tokens[$j]->is(T_AS)) {
-                $alias = $this->tokens[$j + 1]->text;
-                $j += 2;
-            }
-
-            if ($classLike) {
-                $this->alias(ltrim($name->text, '\\'), $alias, $name->line);
-            }
+            $j = $this->importAs($name, ltrim($name->text, '\\'), $j, $classLike);
 
             if ($this->tokens[$j]->text !== ',') {
                 return $j;
@@ -225,29 +210,40 @@ final class DependencyScanner
         $count = count($this->tokens);
 
         while ($j < $count && $this->tokens[$j]->text !== '}') {
-            $itemIsClass = $classLike;
-
-            if ($this->tokens[$j]->is([T_FUNCTION, T_CONST])) {
-                $itemIsClass = false;
-                $j++;
-            }
-
+            [$j, $itemIsClass] = $this->importKind($j, $classLike);
             $name = $this->tokens[$j];
-            $alias = null;
-            $j++;
-
-            if (($this->tokens[$j] ?? null)?->is(T_AS) === true) {
-                $alias = $this->tokens[$j + 1]->text;
-                $j += 2;
-            }
-
-            if ($itemIsClass && $name->is(self::NAMES)) {
-                $this->alias($prefix.'\\'.$name->text, $alias, $name->line);
-            }
+            $j = $this->importAs($name, $prefix.'\\'.$name->text, $j + 1, $itemIsClass && $name->is(self::NAMES));
 
             if (($this->tokens[$j] ?? null)?->text === ',') {
                 $j++;
             }
+        }
+
+        return $j;
+    }
+
+    /**
+     * Past a `function` or `const` marker at $j, which makes the import name no class.
+     *
+     * @return array{int, bool} the index after it, and whether the import still names a class
+     */
+    private function importKind(int $j, bool $classLike): array
+    {
+        return ($this->tokens[$j] ?? null)?->is([T_FUNCTION, T_CONST]) === true ? [$j + 1, false] : [$j, $classLike];
+    }
+
+    /** The `as C` after an imported name at $j, then the alias recorded when it names a class; returns the index after it. */
+    private function importAs(PhpToken $name, string $class, int $j, bool $classLike): int
+    {
+        $alias = null;
+
+        if (($this->tokens[$j] ?? null)?->is(T_AS) === true) {
+            $alias = $this->tokens[$j + 1]->text;
+            $j += 2;
+        }
+
+        if ($classLike) {
+            $this->alias($class, $alias, $name->line);
         }
 
         return $j;

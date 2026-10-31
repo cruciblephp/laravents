@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Laravents\Discovery;
 
+use LucianoPereira\Crucible\Attributes\Check;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
+use stdClass;
 
 /**
  * One discovered handler method. Plain data, so a registry can later be cached as PHP.
@@ -89,11 +91,66 @@ final readonly class HandlerDefinition
      */
     public function attributes(string $attribute): array
     {
-        $found = [
+        return array_map(static fn (ReflectionAttribute $found): object => $found->newInstance(), $this->reflectedAttributes($attribute));
+    }
+
+    /**
+     * The attribute attribute() answers, as its class and the arguments written in the source, when every argument
+     * is plain data (a string, number, bool, null, or an array of them): `new $class(...$arguments)` builds it, as
+     * reflection does. Null when the handler carries none, false when an argument is anything else (an enum, an
+     * object), which only reflection rebuilds.
+     *
+     * @param  class-string  $attribute
+     * @return array{class-string, array<array-key, mixed>}|false|null
+     */
+    public function plainAttribute(string $attribute): array|false|null
+    {
+        $found = $this->reflectedAttributes($attribute)[0] ?? null;
+
+        if ($found === null) {
+            return null;
+        }
+
+        $arguments = $found->getArguments();
+
+        return self::plain($arguments) ? [$found->getName(), $arguments] : false;
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param  class-string<T>  $attribute
+     * @return list<ReflectionAttribute<T>>
+     */
+    private function reflectedAttributes(string $attribute): array
+    {
+        return [
             ...(new ReflectionMethod($this->class, $this->method))->getAttributes($attribute, ReflectionAttribute::IS_INSTANCEOF),
             ...(new ReflectionClass($this->class))->getAttributes($attribute, ReflectionAttribute::IS_INSTANCEOF),
         ];
+    }
 
-        return array_map(static fn (ReflectionAttribute $found): object => $found->newInstance(), $found);
+    #[Check([null], returns: true, name: 'null')]
+    #[Check(['max'], returns: true, name: 'a string')]
+    #[Check([3], returns: true, name: 'an int')]
+    #[Check([1.5], returns: true, name: 'a float')]
+    #[Check([false], returns: true, name: 'a bool')]
+    #[Check([['max' => 3, 'tags' => ['a', null]]], returns: true, name: 'nested arrays of them')]
+    #[Check([HandlerKind::Command], returns: false, name: 'an enum, which var_export() writes as a runtime constant')]
+    #[Check([new stdClass], returns: false, name: 'an object')]
+    #[Check([['ok', [HandlerKind::Event]]], returns: false, name: 'an enum deep in an array')]
+    private static function plain(mixed $value): bool
+    {
+        if (! is_array($value)) {
+            return $value === null || is_scalar($value);
+        }
+
+        foreach ($value as $item) {
+            if (! self::plain($item)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

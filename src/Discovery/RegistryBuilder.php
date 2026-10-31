@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace Laravents\Discovery;
 
 use Illuminate\Support\Str;
+use Laravents\Attributes\After;
+use Laravents\Attributes\Around;
 use Laravents\Attributes\Asynchronous;
 use Laravents\Attributes\Authorize;
+use Laravents\Attributes\Before;
+use Laravents\Attributes\CommandHandler;
 use Laravents\Attributes\Deferred;
+use Laravents\Attributes\EventHandler;
 use Laravents\Attributes\Expose;
+use Laravents\Attributes\QueryHandler;
 use Laravents\Exceptions\DiscoveryException;
 use Laravents\Interceptors\AuthorizationInterceptor;
 use Laravents\Interceptors\TransactionInterceptor;
@@ -76,28 +82,15 @@ final readonly class RegistryBuilder
     /** @param ReflectionClass<object> $class */
     private function interceptor(ReflectionClass $class, ReflectionMethod $method): ?InterceptorDefinition
     {
-        $location = $class->getName().'@'.$method->getName().' ('.$class->getFileName().':'.$method->getStartLine().')';
-        $found = [];
+        $location = $this->location($class, $method);
+        $marked = $this->marked($method, $location, InterceptorKind::cases());
 
-        foreach (InterceptorKind::cases() as $kind) {
-            foreach ($method->getAttributes($kind->attribute()) as $attribute) {
-                $found[] = [$kind, $attribute->newInstance()];
-            }
-        }
-
-        if ($found === []) {
+        if ($marked === null) {
             return null;
         }
 
-        if (count($found) > 1) {
-            throw DiscoveryException::invalid($location, 'has more than one of #[Before], #[Around] and #[After]');
-        }
-
-        [$kind, $attribute] = $found[0];
-
-        if (! $method->isPublic() || $method->isStatic()) {
-            throw DiscoveryException::invalid($location, 'must be a public, non-static method');
-        }
+        /** @var Before|Around|After $attribute */
+        [$kind, $attribute] = $marked;
 
         if (! class_exists($attribute->pointcut) && ! interface_exists($attribute->pointcut)) {
             throw DiscoveryException::invalid($location, sprintf('has an unknown pointcut [%s]', $attribute->pointcut));
@@ -116,6 +109,49 @@ final readonly class RegistryBuilder
             file: (string) $class->getFileName(),
             line: (int) $method->getStartLine(),
         );
+    }
+
+    /** @param ReflectionClass<object> $class */
+    private function location(ReflectionClass $class, ReflectionMethod $method): string
+    {
+        return $class->getName().'@'.$method->getName().' ('.$class->getFileName().':'.$method->getStartLine().')';
+    }
+
+    /**
+     * The one attribute of $kinds on the method, with its kind, or null when it has none. More than one, or one on a
+     * method that is not public and non-static, fails discovery.
+     *
+     * @template TKind of HandlerKind|InterceptorKind
+     *
+     * @param  list<TKind>  $kinds  in the order the message names them
+     * @return array{TKind, object}|null
+     */
+    private function marked(ReflectionMethod $method, string $location, array $kinds): ?array
+    {
+        $found = [];
+
+        foreach ($kinds as $kind) {
+            foreach ($method->getAttributes($kind->attribute()) as $attribute) {
+                $found[] = [$kind, $attribute->newInstance()];
+            }
+        }
+
+        if ($found === []) {
+            return null;
+        }
+
+        if (count($found) > 1) {
+            $names = array_map(static fn (HandlerKind|InterceptorKind $kind): string => '#['.class_basename($kind->attribute()).']', $kinds);
+            $last = array_pop($names);
+
+            throw DiscoveryException::invalid($location, sprintf('has more than one of %s and %s', implode(', ', $names), $last));
+        }
+
+        if (! $method->isPublic() || $method->isStatic()) {
+            throw DiscoveryException::invalid($location, 'must be a public, non-static method');
+        }
+
+        return $found[0];
     }
 
     /** @param class-string $class */
@@ -148,28 +184,15 @@ final readonly class RegistryBuilder
     /** @param ReflectionClass<object> $class */
     private function definition(ReflectionClass $class, ReflectionMethod $method): ?HandlerDefinition
     {
-        $location = $class->getName().'@'.$method->getName().' ('.$class->getFileName().':'.$method->getStartLine().')';
-        $found = [];
+        $location = $this->location($class, $method);
+        $marked = $this->marked($method, $location, HandlerKind::cases());
 
-        foreach (HandlerKind::cases() as $kind) {
-            foreach ($method->getAttributes($kind->attribute()) as $attribute) {
-                $found[] = [$kind, $attribute->newInstance()];
-            }
-        }
-
-        if ($found === []) {
+        if ($marked === null) {
             return null;
         }
 
-        if (count($found) > 1) {
-            throw DiscoveryException::invalid($location, 'has more than one of #[CommandHandler], #[QueryHandler] and #[EventHandler]');
-        }
-
-        [$kind, $attribute] = $found[0];
-
-        if (! $method->isPublic() || $method->isStatic()) {
-            throw DiscoveryException::invalid($location, 'must be a public, non-static method');
-        }
+        /** @var CommandHandler|QueryHandler|EventHandler $attribute */
+        [$kind, $attribute] = $marked;
 
         $asynchronous = $method->getAttributes(Asynchronous::class)[0] ?? null;
 

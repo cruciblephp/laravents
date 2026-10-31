@@ -182,6 +182,10 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
         });
     }
 
+    // The assertions, one set per kind under the names Laravel's fakes use (assertSent, assertNotSent, ...). Each is
+    // one line into the shared helpers below, so the sets are parallel by design: the logic exists once.
+    // phpcpd-ignore-start
+
     // Commands.
 
     /**
@@ -192,20 +196,7 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
      */
     public function assertSent(string|Closure $command, callable|int|null $callback = null): void
     {
-        if ($command instanceof Closure) {
-            [$command, $callback] = [$this->firstClosureParameterType($command), $command];
-        }
-
-        if (is_int($callback)) {
-            $this->assertSentTimes($command, $callback);
-
-            return;
-        }
-
-        PHPUnit::assertTrue(
-            $this->sent($command, $callback)->isNotEmpty(),
-            "The expected [{$command}] command was not sent."
-        );
+        $this->assertRecorded(HandlerKind::Command, $command, $callback);
     }
 
     /** Assert if a command was sent a number of times. */
@@ -221,14 +212,7 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
      */
     public function assertNotSent(string|Closure $command, ?callable $callback = null): void
     {
-        if ($command instanceof Closure) {
-            [$command, $callback] = [$this->firstClosureParameterType($command), $command];
-        }
-
-        PHPUnit::assertCount(
-            0, $this->sent($command, $callback),
-            "The unexpected [{$command}] command was sent."
-        );
+        $this->assertNotRecorded(HandlerKind::Command, $command, $callback);
     }
 
     /** Assert that no commands were sent. */
@@ -257,20 +241,7 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
      */
     public function assertAsked(string|Closure $query, callable|int|null $callback = null): void
     {
-        if ($query instanceof Closure) {
-            [$query, $callback] = [$this->firstClosureParameterType($query), $query];
-        }
-
-        if (is_int($callback)) {
-            $this->assertAskedTimes($query, $callback);
-
-            return;
-        }
-
-        PHPUnit::assertTrue(
-            $this->asked($query, $callback)->isNotEmpty(),
-            "The expected [{$query}] query was not asked."
-        );
+        $this->assertRecorded(HandlerKind::Query, $query, $callback);
     }
 
     /** Assert if a query was asked a number of times. */
@@ -286,14 +257,7 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
      */
     public function assertNotAsked(string|Closure $query, ?callable $callback = null): void
     {
-        if ($query instanceof Closure) {
-            [$query, $callback] = [$this->firstClosureParameterType($query), $query];
-        }
-
-        PHPUnit::assertCount(
-            0, $this->asked($query, $callback),
-            "The unexpected [{$query}] query was asked."
-        );
+        $this->assertNotRecorded(HandlerKind::Query, $query, $callback);
     }
 
     /** Assert that no queries were asked. */
@@ -322,20 +286,7 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
      */
     public function assertPublished(string|Closure $event, callable|int|null $callback = null): void
     {
-        if ($event instanceof Closure) {
-            [$event, $callback] = [$this->firstClosureParameterType($event), $event];
-        }
-
-        if (is_int($callback)) {
-            $this->assertPublishedTimes($event, $callback);
-
-            return;
-        }
-
-        PHPUnit::assertTrue(
-            $this->published($event, $callback)->isNotEmpty(),
-            "The expected [{$event}] event was not published."
-        );
+        $this->assertRecorded(HandlerKind::Event, $event, $callback);
     }
 
     /** Assert if an event was published a number of times. */
@@ -351,14 +302,7 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
      */
     public function assertNotPublished(string|Closure $event, ?callable $callback = null): void
     {
-        if ($event instanceof Closure) {
-            [$event, $callback] = [$this->firstClosureParameterType($event), $event];
-        }
-
-        PHPUnit::assertCount(
-            0, $this->published($event, $callback),
-            "The unexpected [{$event}] event was published."
-        );
+        $this->assertNotRecorded(HandlerKind::Event, $event, $callback);
     }
 
     /** Assert that no events were published. */
@@ -377,6 +321,8 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
     {
         return $this->recordedMatching(HandlerKind::Event, $event, $callback);
     }
+
+    // phpcpd-ignore-end
 
     // Internals.
 
@@ -489,6 +435,47 @@ final class LaraventsFake implements CommandBus, EventBus, Fake, QueryBus
                 && ($callback === null || (bool) $callback($recorded->message, $recorded->headers)))
             ->map(static fn (RecordedMessage $recorded): array|object => $recorded->message)
             ->values();
+    }
+
+    /**
+     * assertSent(), assertAsked() and assertPublished(), per kind: a closure stands for its parameter's class and
+     * is the callback; an int asserts how many times.
+     *
+     * @param  callable|int|null  $callback  Takes the message and its headers
+     */
+    private function assertRecorded(HandlerKind $kind, string|Closure $name, callable|int|null $callback): void
+    {
+        if ($name instanceof Closure) {
+            [$name, $callback] = [$this->firstClosureParameterType($name), $name];
+        }
+
+        if (is_int($callback)) {
+            $this->assertTimes($kind, $name, $callback);
+
+            return;
+        }
+
+        PHPUnit::assertTrue(
+            $this->recordedMatching($kind, $name, $callback)->isNotEmpty(),
+            sprintf('The expected [%s] %s was not %s.', $name, $kind->value, $this->verb($kind)),
+        );
+    }
+
+    /**
+     * assertNotSent(), assertNotAsked() and assertNotPublished(), per kind.
+     *
+     * @param  callable|null  $callback  Takes the message and its headers
+     */
+    private function assertNotRecorded(HandlerKind $kind, string|Closure $name, ?callable $callback): void
+    {
+        if ($name instanceof Closure) {
+            [$name, $callback] = [$this->firstClosureParameterType($name), $name];
+        }
+
+        PHPUnit::assertCount(
+            0, $this->recordedMatching($kind, $name, $callback),
+            sprintf('The unexpected [%s] %s was %s.', $name, $kind->value, $this->verb($kind)),
+        );
     }
 
     private function assertTimes(HandlerKind $kind, string|Closure $name, int $times): void

@@ -88,6 +88,19 @@ php artisan laravents:cache
 
 A handler added after the cache was written is invisible until the next `laravents:cache`, as a route is after `route:cache`. A cache that cannot be built (a duplicate routing key, an attribute where it is not allowed) makes `laravents:cache` exit 1 with the discovery error and leaves no cache file behind, so a broken build never ships a stale registry. The file is `bootstrap/cache/laravents.php`, or `LARAVENTS_CACHE_PATH` (absolute, or relative to the base path).
 
+The file is a plain PHP array (`<?php return [...];`), which opcache keeps in shared memory, so a cached boot reads the registry without parsing or unserializing anything. Each handler is built the first time it is looked up, so a request that dispatches one command builds one handler. The file is written beside its final name and renamed into place, so a request never reads half of it.
+
+It also carries a fingerprint of what discovery read from the configuration (`paths`, the modules namespace and path, `disabled`, the manifest settings), the Laravents version and the file's format. When the configuration in force no longer matches, `laravents.cache.stale` decides:
+
+| `cache.stale` | A configuration change after `laravents:cache` |
+|---|---|
+| `scan` (default) | The cache is set aside: the registry is scanned, and the log says so once, until the next `laravents:cache`. A module disabled since is out at once. |
+| `cache` | The cache is read as it is until the next `laravents:cache`, as a route cache is. |
+
+A file of another format, or one that is not a registry, is always set aside and the registry scanned.
+
+`laravents:cache` reads the registry back from what it is about to write and compares it with the scan, interceptor attributes and module manifests included. A registry that would not come back as it was scanned is not written, and the command exits 1. A module manifest class must keep its constructor parameters as public properties, which the cache stores.
+
 Proven by `tests/Feature/Console/Cache.pest.php`.
 
 ## Check the installation
@@ -108,7 +121,7 @@ prints a Laravents section:
   Registry ............................................................................... Scanned
 ```
 
-`Registry` reads `Cached` once `laravents:cache` has run. When discovery fails, the section shows one `Registry` row with the error and `about` still exits 0; `laravents:verify` is the command that fails on it.
+`Registry` reads `Cached` once `laravents:cache` has run, and `Scanned (the cache file is stale: run laravents:cache)` when a cache file is there but was set aside. When discovery fails, the section shows one `Registry` row with the error and `about` still exits 0; `laravents:verify` is the command that fails on it.
 
 Proven by `tests/Feature/Console/About.pest.php`.
 

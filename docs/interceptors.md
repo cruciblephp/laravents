@@ -126,7 +126,7 @@ The pointcut says which handlers an interceptor applies to. It is a class name, 
 
 - **A class or interface of the handler class**: an interceptor whose pointcut is `Audited` applies to every handler whose class implements `Audited`.
 
-A handler no pointcut matches runs with no interceptors. Matching happens once, at discovery: the registry stores each handler's interceptors in order, with the attribute instances, so nothing is reflected per call. `laravents:show` lists each command's and query's interceptors.
+A handler no pointcut matches runs with no interceptors. Matching happens once, at discovery: the registry stores each handler's interceptors in order, with the attribute instances, so nothing is reflected per call. A cached registry keeps each attribute as its class and the arguments written in the source, and builds it with `new` the first time its handler is looked up; an attribute with an enum or object argument is read through reflection then instead. `laravents:show` lists each command's and query's interceptors.
 
 ## Precedence
 

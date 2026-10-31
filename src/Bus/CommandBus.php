@@ -9,6 +9,8 @@ use Laravents\Discovery\HandlerKind;
 
 final readonly class CommandBus extends MessageBus implements CommandBusContract
 {
+    protected const HandlerKind KIND = HandlerKind::Command;
+
     /**
      * @param  array<string, mixed>|object  $payload
      * @param  array<string, scalar|null>  $headers
@@ -22,10 +24,5 @@ final readonly class CommandBus extends MessageBus implements CommandBusContract
     public function dispatch(object $command, array $headers = []): mixed
     {
         return $this->routeObject($command, $headers);
-    }
-
-    protected function kind(): HandlerKind
-    {
-        return HandlerKind::Command;
     }
 }

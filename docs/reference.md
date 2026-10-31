@@ -10,6 +10,7 @@
 | `modules.namespace` | `'Modules'` | The modules root namespace; the segment under it is the module | [Modules](modules.md#configuration) |
 | `modules.path` | `base_path('modules')` | The directory the modules namespace maps to; the generators write here | [Console](console.md#generators) |
 | `modules.disabled` | `[]` | Modules left out of discovery: their handlers, interceptors and `#[Publishes]` models are not registered | [Modules](modules.md#turning-a-module-off) |
+| `cache.stale` | `env('LARAVENTS_CACHE_STALE', 'scan')` | A registry cache written for another configuration: `scan` sets it aside and scans, `cache` reads it until the next `laravents:cache` | [Installation](installation.md#production-the-registry-cache) |
 | `async.connection` | `env('LARAVENTS_QUEUE_CONNECTION')` | Queue connection for asynchronous handlers; null is the application's default | [Outbox](outbox.md#configuration) |
 | `async.tries` | `env('LARAVENTS_TRIES', 3)` | Attempts per asynchronous handler before `failed_jobs` | [Outbox](outbox.md#retries-and-failed-jobs) |
 | `outbox.republish_after` | `env('LARAVENTS_REPUBLISH_AFTER', 300)` | Seconds after which an incomplete, dispatched row is stale | [Outbox](outbox.md#republishing) |

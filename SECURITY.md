@@ -6,7 +6,7 @@ Security fixes are released for the latest minor version only.
 
 | Version | Supported |
 |---|---|
-| 1.0.x (latest minor) | Yes |
+| 1.3.x (latest minor) | Yes |
 | Anything older | No: upgrade to the latest minor |
 
 ## Reporting a vulnerability

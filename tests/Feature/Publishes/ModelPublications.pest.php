@@ -31,10 +31,6 @@ use Workbench\App\Models\User;
 
 uses(RefreshDatabase::class);
 
-afterEach(function (): void {
-    app(RegistryCache::class)->clear();
-});
-
 /** The Library fixture's registry in place of the app's, its model events subscribed as boot subscribes the app's. */
 function library(): Registry
 {
@@ -159,7 +155,7 @@ test('so laravents:cache fails on it, and writes no cache', function (): void {
 test('the registry cache round trip keeps the publications', function (): void {
     expect(Artisan::call('laravents:cache'))->toBe(0);
 
-    expect(app(RegistryCache::class)->load()->modelPublications())
+    expect(cachedRegistry()->modelPublications())
         ->toEqual(LaraventsServiceProvider::scan(config())->modelPublications())
         ->toHaveCount(2);
 });

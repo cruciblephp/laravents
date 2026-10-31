@@ -9,6 +9,8 @@ use Laravents\Discovery\HandlerKind;
 
 final readonly class QueryBus extends MessageBus implements QueryBusContract
 {
+    protected const HandlerKind KIND = HandlerKind::Query;
+
     /**
      * @param  array<string, mixed>|object  $payload
      * @param  array<string, scalar|null>  $headers
@@ -22,10 +24,5 @@ final readonly class QueryBus extends MessageBus implements QueryBusContract
     public function dispatch(object $query, array $headers = []): mixed
     {
         return $this->routeObject($query, $headers);
-    }
-
-    protected function kind(): HandlerKind
-    {
-        return HandlerKind::Query;
     }
 }

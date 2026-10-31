@@ -4,12 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Artisan;
 use Laravents\Discovery\Registry;
-use Laravents\Discovery\RegistryCache;
 use Laravents\LaraventsServiceProvider;
-
-afterEach(function (): void {
-    app(RegistryCache::class)->clear();
-});
 
 /**
  * The rows of `about --only=laravents`, trimmed, with the dot leader and any run of spaces folded into one space.
@@ -42,6 +37,8 @@ test('about reports the workbench: registry, modules, handlers, model publicatio
 
 test('about says Cached once laravents:cache wrote the registry, and follows the HTTP and outbox config', function (): void {
     Artisan::call('laravents:cache');
+    // The next process: one that boots with the cache in place.
+    app()->forgetInstance(Registry::class);
     config([
         'laravents.http.enabled' => false,
         'laravents.outbox.connections' => [null, 'other'],
@@ -89,4 +86,12 @@ test('about with a broken registry prints the error as one row, keeps the config
         ->and($rows[3])->toStartWith('Registry ERROR ')
         ->and($rows[3])->toContain('#[Asynchronous] is only allowed on an event handler')
         ->and(implode("\n", $rows))->not->toContain('Stack trace');
+});
+
+test('about says when a cache file is there but stale, so the registry was scanned', function (): void {
+    Artisan::call('laravents:cache');
+    config(['laravents.modules.disabled' => ['Press']]);
+    app()->forgetInstance(Registry::class);
+
+    expect(aboutRows())->toContain('Registry Scanned (the cache file is stale: run laravents:cache)');
 });

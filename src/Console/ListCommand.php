@@ -19,7 +19,7 @@ final class ListCommand extends Command
 
     public function handle(Registry $registry, Repository $config, RegistryCache $cache): int
     {
-        if ($cache->exists()) {
+        if ($registry->fromCache()) {
             $this->components->info($cache->note($this->laravel->basePath()));
         }
 

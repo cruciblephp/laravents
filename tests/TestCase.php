@@ -24,6 +24,26 @@ class TestCase extends BaseTestCase
     /** Package discovery on: LaraventsServiceProvider and the Laravents alias come from composer.json's extra.laravel. */
     protected $enablesPackageDiscoveries = true;
 
+    /**
+     * After every test, the registry cache and any file written beside it are removed with plain PHP, not with
+     * RegistryCache::clear(): cleanup must not run the code under test, or a broken write or clear (a mutant) leaves
+     * files that fail the tests after it.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->beforeApplicationDestroyed(function (): void {
+            $cache = $this->app?->bootstrapPath('cache/laravents.php');
+
+            foreach ($cache === null ? [] : [$cache, ...(glob($cache.'.*.tmp') ?: [])] as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+        });
+    }
+
     /** @param  Application  $app */
     protected function defineEnvironment($app): void
     {

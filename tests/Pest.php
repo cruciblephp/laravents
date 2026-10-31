@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Laravents\Async\ExecuteHandlerJob;
+use Laravents\Discovery\Registry;
+use Laravents\Discovery\RegistryCache;
+use Laravents\LaraventsServiceProvider;
 use Laravents\Outbox\EventPublication;
 use Laravents\Tests\TestCase;
 
@@ -101,4 +104,16 @@ function queuedJobs(): array
 function publicationOf(ExecuteHandlerJob $job): EventPublication
 {
     return EventPublication::query()->findOrFail($job->publicationId);
+}
+
+/**
+ * The registry laravents:cache wrote, read back as the next boot reads it: for the configuration in force, its
+ * manifests rebuilt through the container.
+ */
+function cachedRegistry(?RegistryCache $cache = null): Registry
+{
+    $cache ??= app(RegistryCache::class);
+
+    return $cache->load(RegistryCache::fingerprint(config(), app()->basePath()), LaraventsServiceProvider::manifests(app()))
+        ?? throw new RuntimeException(sprintf('There is no registry cache [%s] this configuration can load.', $cache->path));
 }
